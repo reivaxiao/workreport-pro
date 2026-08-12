@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>工作汇报系统架构框架</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    padding: 32px 24px;
+    line-height: 1.6;
+  }
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+  }
+  h1 {
+    font-size: 22px;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 8px;
+    color: #1a1a1a;
+  }
+  .subtitle {
+    text-align: center;
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 36px;
+  }
+
+  .layer {
+    margin-bottom: 20px;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid #e0e0e0;
+    background: #fff;
+  }
+  .layer-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+  }
+  .layer-body {
+    padding: 16px 20px;
+  }
+
+  .layer-user .layer-header { background: #534AB7; }
+  .layer-interact .layer-header { background: #5F5E5A; }
+  .layer-agent .layer-header { background: #185FA5; }
+  .layer-data .layer-header { background: #5F5E5A; }
+  .layer-pipeline .layer-header { background: #0F6E56; }
+
+  .user-grid {
+    display: flex;
+    gap: 16px;
+    align-items: stretch;
+  }
+  .manager-card {
+    flex: 0 0 140px;
+    background: linear-gradient(135deg, #534AB7, #7F77DD);
+    border-radius: 10px;
+    padding: 14px;
+    color: #fff;
+    text-align: center;
+  }
+  .manager-card .role { font-size: 11px; opacity: 0.8; margin-bottom: 4px; }
+  .manager-card .name { font-size: 15px; font-weight: 600; }
+  .member-cards {
+    flex: 1;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .member-card {
+    flex: 1;
+    min-width: 130px;
+    background: #f8f6ff;
+    border: 1px solid #d5d1f0;
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+  }
+  .member-card .name { font-size: 13px; font-weight: 600; color: #3C3489; }
+  .member-card .role { font-size: 11px; color: #888; margin-top: 2px; }
+
+  .interact-row {
+    display: flex;
+    gap: 16px;
+  }
+  .interact-item {
+    flex: 1;
+    background: #f8f8f6;
+    border: 1px solid #e0e0d8;
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    color: #444;
+  }
+  .interact-item .icon { font-size: 20px; margin-bottom: 4px; }
+
+  .agent-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+  }
+  .agent-card {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #e0e0e0;
+  }
+  .agent-card-header {
+    padding: 8px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+    text-align: center;
+  }
+  .agent-card-body {
+    padding: 8px 10px;
+    background: #fff;
+  }
+  .agent-card-body ul {
+    list-style: none;
+    font-size: 10px;
+    color: #666;
+  }
+  .agent-card-body li {
+    padding: 2px 0;
+    padding-left: 12px;
+    position: relative;
+  }
+  .agent-card-body li::before {
+    content: "";
+    position: absolute;
+    left: 2px;
+    top: 8px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+  }
+
+  .agent-review .agent-card-header { background: #378ADD; }
+  .agent-review .agent-card-body li::before { background: #378ADD; }
+  .agent-remind .agent-card-header { background: #BA7517; }
+  .agent-remind .agent-card-body li::before { background: #BA7517; }
+  .agent-todo .agent-card-header { background: #0F6E56; }
+  .agent-todo .agent-card-body li::before { background: #0F6E56; }
+  .agent-report .agent-card-header { background: #534AB7; }
+  .agent-report .agent-card-body li::before { background: #534AB7; }
+  .agent-insight .agent-card-header { background: #D4537E; }
+  .agent-insight .agent-card-body li::before { background: #D4537E; }
+
+  .data-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .data-card {
+    background: #f8f8f6;
+    border: 1px solid #e0e0d8;
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+  }
+  .data-card .title { font-size: 13px; font-weight: 600; color: #444; }
+  .data-card .desc { font-size: 11px; color: #999; margin-top: 4px; }
+
+  .pipeline {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .pipeline-step {
+    flex: 1;
+    background: #f0faf6;
+    border: 1px solid #c0e8d8;
+    border-radius: 10px;
+    padding: 12px 10px;
+    text-align: center;
+  }
+  .pipeline-step .step-title { font-size: 13px; font-weight: 600; color: #085041; }
+  .pipeline-step .step-desc { font-size: 10px; color: #5a8a78; margin-top: 4px; }
+  .pipeline-arrow {
+    font-size: 16px;
+    color: #0F6E56;
+    flex: 0 0 auto;
+  }
+  .pipeline-step.review {
+    background: #fff8f2;
+    border-color: #f0d68a;
+  }
+  .pipeline-step.review .step-title { color: #BA7517; }
+  .pipeline-step.review .step-desc { color: #997520; }
+  .pipeline-step.final {
+    background: #534AB7;
+    border-color: #534AB7;
+  }
+  .pipeline-step.final .step-title { color: #fff; }
+  .pipeline-step.final .step-desc { color: #CECBF6; }
+
+  .meta-bar {
+    margin-top: 20px;
+    background: #fdf8ed;
+    border: 1px solid #f0d68a;
+    border-radius: 10px;
+    padding: 14px 20px;
+  }
+  .meta-bar .label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #BA7517;
+    margin-right: 12px;
+  }
+  .meta-bar .rule {
+    font-size: 12px;
+    color: #6b4f10;
+    line-height: 1.8;
+  }
+  .meta-bar .rule span { color: #BA7517; font-weight: 500; }
+
+  .flow-arrow {
+    text-align: center;
+    color: #ccc;
+    font-size: 16px;
+    padding: 2px 0;
+    margin: -4px 0;
+  }
+
+  @media (max-width: 750px) {
+    .agent-grid { grid-template-columns: repeat(3, 1fr); }
+    .data-grid, .pipeline { grid-template-columns: repeat(2, 1fr); flex-wrap: wrap; }
+    .user-grid { flex-direction: column; }
+    .manager-card { flex: auto; }
+    .pipeline-arrow { display: none; }
+    .pipeline { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>工作汇报系统架构框架</h1>
+  <p class="subtitle">五层架构 · 五个独立 Agent · 企业微信集成</p>
+
+  <!-- Layer 1: 用户层 -->
+  <div class="layer layer-user">
+    <div class="layer-header">用户层</div>
+    <div class="layer-body">
+      <div class="user-grid">
+        <div class="manager-card">
+          <div class="role">管理者</div>
+          <div class="name">肖凌华</div>
+          <div style="font-size:10px;opacity:0.7;margin-top:4px;">集团招聘总监</div>
+        </div>
+        <div class="member-cards">
+          <div class="member-card">
+            <div class="name">程宇欣</div>
+            <div class="role">COE + HRIS</div>
+          </div>
+          <div class="member-card">
+            <div class="name">李微微</div>
+            <div class="role">HRBP · 营销板块</div>
+          </div>
+          <div class="member-card">
+            <div class="name">高丽茹</div>
+            <div class="role">HRBP · 产研板块</div>
+          </div>
+          <div class="member-card">
+            <div class="name">李　雯</div>
+            <div class="role">HRBP · 运营板块</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow">&#8595;</div>
+
+  <!-- Layer 2: 交互层 -->
+  <div class="layer layer-interact">
+    <div class="layer-header">交互层</div>
+    <div class="layer-body">
+      <div class="interact-row">
+        <div class="interact-item">
+          <div class="icon">&#x1F4BB;</div>
+          Web 应用（数据录入与管理）
+        </div>
+        <div class="interact-item">
+          <div class="icon">&#x1F916;</div>
+          企业微信 Bot（提醒与通知）
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow">&#8595;</div>
+
+  <!-- Layer 3: Agent 层 -->
+  <div class="layer layer-agent">
+    <div class="layer-header">Agent 层（独立运行的智能体）</div>
+    <div class="layer-body">
+      <div class="agent-grid">
+
+        <div class="agent-card agent-review">
+          <div class="agent-card-header">审阅 Agent</div>
+          <div class="agent-card-body">
+            <ul>
+              <li>结合历史判断进展</li>
+              <li>精简提炼内容</li>
+              <li>追问模糊描述</li>
+              <li><strong>对话式·不退回</strong></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="agent-card agent-remind">
+          <div class="agent-card-header">催办 Agent</div>
+          <div class="agent-card-body">
+            <ul>
+              <li>周五 16:00 全员提醒</li>
+              <li>18:00 / 21:00 催办</li>
+              <li>群内 @ 具体人</li>
+              <li><strong>持续至全员提交</strong></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="agent-card agent-todo">
+          <div class="agent-card-header">待办 Agent</div>
+          <div class="agent-card-body">
+            <ul>
+              <li>综合周报 + 批注</li>
+              <li>+ 腾讯会议纪要</li>
+              <li>提取下阶段待办</li>
+              <li><strong>周会后触发</strong></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="agent-card agent-report">
+          <div class="agent-card-header">报告 Agent</div>
+          <div class="agent-card-body">
+            <ul>
+              <li>时间维度聚合</li>
+              <li>目标维度聚合</li>
+              <li>月/季自动触发</li>
+              <li><strong>年度手动触发</strong></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="agent-card agent-insight">
+          <div class="agent-card-header">解读 Agent</div>
+          <div class="agent-card-body">
+            <ul>
+              <li>调用 HR 专家知识</li>
+              <li>专业视角洞察分析</li>
+              <li>输出解读报告</li>
+              <li><strong>报告后自动触发</strong></li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow">&#8595;</div>
+
+  <!-- Layer 4: 核心数据层 -->
+  <div class="layer layer-data">
+    <div class="layer-header">核心数据层</div>
+    <div class="layer-body">
+      <div class="data-grid">
+        <div class="data-card">
+          <div class="title">年度目标</div>
+          <div class="desc">6 项目标 · 含权重</div>
+        </div>
+        <div class="data-card">
+          <div class="title">工作事项</div>
+          <div class="desc">年度重点 · 自主专项 · 常规</div>
+        </div>
+        <div class="data-card">
+          <div class="title">周报数据</div>
+          <div class="desc">每周提交 · 持续沉淀</div>
+        </div>
+        <div class="data-card">
+          <div class="title">管理者批注</div>
+          <div class="desc">周会共识 · 逐条记录</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow">&#8595;</div>
+
+  <!-- Layer 5: 报告流水线 -->
+  <div class="layer layer-pipeline">
+    <div class="layer-header">报告生成与输出流水线</div>
+    <div class="layer-body">
+      <div class="pipeline">
+        <div class="pipeline-step">
+          <div class="step-title">报告 Agent</div>
+          <div class="step-desc">数据聚合 · 生成初版报告</div>
+        </div>
+        <div class="pipeline-arrow">&#10142;</div>
+        <div class="pipeline-step">
+          <div class="step-title">解读 Agent</div>
+          <div class="step-desc">HR 专家视角 · 洞察分析</div>
+        </div>
+        <div class="pipeline-arrow">&#10142;</div>
+        <div class="pipeline-step review">
+          <div class="step-title">团队综合审阅</div>
+          <div class="step-desc">修改优化 · 达成共识</div>
+        </div>
+        <div class="pipeline-arrow">&#10142;</div>
+        <div class="pipeline-step final">
+          <div class="step-title">正式版发布</div>
+          <div class="step-desc">HTML / PDF 输出</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Meta bar -->
+  <div class="meta-bar">
+    <div class="rule">
+      <span class="label">权限规则</span>
+      工作记录 <span>全员可见</span> &nbsp;&nbsp;|&nbsp;&nbsp;
+      AI 审阅对话 <span>仅管理者可见</span> &nbsp;&nbsp;|&nbsp;&nbsp;
+      批注 <span>仅管理者与被批注人可见</span>
+    </div>
+    <div class="rule" style="margin-top:6px;">
+      <span class="label">展示规则</span>
+      分类体系自动区分报告展示层级：<span>年度重点工作突出展示</span> · 常规工作 / 自主专项简略呈现
+    </div>
+    <div class="rule" style="margin-top:6px;">
+      <span class="label">解读 Agent</span>
+      调用 HR 专家知识库（如 WorkBuddy 人力资源专家团），对聚合报告进行专业洞察与解读，输出后进入团队审阅环节
+    </div>
+  </div>
+</div>
+</body>
+</html>
