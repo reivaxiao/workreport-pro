@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>仓库目录框架</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    padding: 32px 24px;
+    line-height: 1.6;
+  }
+  .container { max-width: 720px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 600; text-align: center; margin-bottom: 6px; color: #1a1a1a; }
+  .subtitle { text-align: center; font-size: 13px; color: #888; margin-bottom: 32px; }
+  .repo-link { display: block; text-align: center; margin-bottom: 32px; }
+  .repo-link a { color: #185FA5; font-size: 13px; text-decoration: none; }
+  .repo-link a:hover { text-decoration: underline; }
+
+  .tree { font-family: "SF Mono", "Consolas", "Courier New", monospace; font-size: 13px; line-height: 2; }
+  .tree .folder { color: #185FA5; font-weight: 600; }
+  .tree .file { color: #444; }
+  .tree .comment { color: #999; margin-left: 12px; font-size: 12px; }
+  .tree .pipe { color: #ccc; }
+  .tree .branch { color: #ccc; }
+
+  .panel { background: #fff; border-radius: 14px; border: 1px solid #e0e0e0; overflow: hidden; margin-bottom: 24px; }
+  .panel-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 20px; font-size: 13px; font-weight: 600; color: #fff;
+  }
+  .panel-body { padding: 20px 24px; }
+
+  .panel-c1 .panel-header { background: #534AB7; }
+  .panel-c2 .panel-header { background: #378ADD; }
+  .panel-c3 .panel-header { background: #0F6E56; }
+  .panel-c4 .panel-header { background: #D4537E; }
+
+  .meta {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+    margin-bottom: 24px;
+  }
+  .meta-card {
+    background: #fff; border: 1px solid #e0e0e0; border-radius: 10px;
+    padding: 14px 12px; text-align: center;
+  }
+  .meta-card .num { font-size: 24px; font-weight: 600; }
+  .meta-card .label { font-size: 11px; color: #888; margin-top: 2px; }
+
+  .version-timeline {
+    display: flex; gap: 0; margin-top: 24px;
+  }
+  .ver-card {
+    flex: 1; padding: 16px; text-align: center; border: 1px solid #e0e0e0;
+  }
+  .ver-card:first-child { border-radius: 10px 0 0 10px; }
+  .ver-card:last-child { border-radius: 0 10px 10px 0; }
+  .ver-card.current { background: #E6F1FB; border-color: #85B7EB; }
+  .ver-card.future { background: #fafafa; }
+  .ver-card .ver-title { font-size: 14px; font-weight: 600; }
+  .ver-card .ver-status { font-size: 11px; margin-top: 4px; }
+  .ver-card.current .ver-status { color: #185FA5; }
+  .ver-card.future .ver-status { color: #999; }
+
+  .daily-log {
+    background: #f8f9fa; border: 1px dashed #ccc; border-radius: 10px;
+    padding: 14px 18px; margin: 16px 0 0 0; font-size: 12px; color: #888;
+  }
+  .daily-log code { background: #eee; padding: 1px 6px; border-radius: 3px; font-size: 11px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>WorkReport Pro</h1>
+  <p class="subtitle">仓库目录框架 · 可追溯 · 可回退</p>
+  <div class="repo-link">
+    <a href="https://github.com/reivaxiao/workreport-pro" target="_blank">github.com/reivaxiao/workreport-pro</a>
+  </div>
+
+  <!-- 概览 -->
+  <div class="meta">
+    <div class="meta-card">
+      <div class="num" style="color:#534AB7;">4</div>
+      <div class="label">顶层分类</div>
+    </div>
+    <div class="meta-card">
+      <div class="num" style="color:#378ADD;">3</div>
+      <div class="label">版本规划</div>
+    </div>
+    <div class="meta-card">
+      <div class="num" style="color:#0F6E56;">5</div>
+      <div class="label">Agent</div>
+    </div>
+    <div class="meta-card">
+      <div class="num" style="color:#D4537E;">2</div>
+      <div class="label">已有文件</div>
+    </div>
+  </div>
+
+  <!-- 分类1: 产品框架 -->
+  <div class="panel panel-c1">
+    <div class="panel-header">00-产品框架与原型</div>
+    <div class="panel-body">
+      <div class="tree">
+        <div><span class="folder">00-产品框架与原型/</span></div>
+        <div><span class="pipe">├── </span><span class="file">product-spec.md</span><span class="comment">完整产品原型说明文档（Markdown）</span></div>
+        <div><span class="pipe">├── </span><span class="file">system-architecture.html</span><span class="comment">五层系统架构框架图（HTML）</span></div>
+        <div><span class="pipe">└── </span><span class="file">README.md</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 分类2: v1.0 开发 -->
+  <div class="panel panel-c2">
+    <div class="panel-header">01-v1.0开发 · 核心 MVP</div>
+    <div class="panel-body">
+      <div class="tree">
+        <div><span class="folder">01-v1.0开发/</span></div>
+        <div><span class="pipe">├── </span><span class="file">README.md</span><span class="comment">v1.0 功能清单</span></div>
+        <div><span class="pipe">├── </span><span class="folder">src/</span><span class="comment">源代码</span></div>
+        <div><span class="pipe">│   </span><span class="pipe">├── </span><span class="folder">frontend/</span><span class="comment">前端代码</span></div>
+        <div><span class="pipe">│   </span><span class="pipe">└── </span><span class="folder">backend/</span><span class="comment">后端代码</span></div>
+        <div><span class="pipe">└── </span><span class="folder">YYYY-MM-DD/</span><span class="comment">每日工作记录（开发日志）</span></div>
+      </div>
+      <div class="daily-log">
+        每日开发完成后，在对应日期文件夹保存工作成果和开发日志<br>
+        例：<code>01-v1.0开发/2026-08-12/notes.md</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- 分类3: v2.0 开发 -->
+  <div class="panel panel-c3">
+    <div class="panel-header">02-v2.0开发 · 增强功能</div>
+    <div class="panel-body">
+      <div class="tree">
+        <div><span class="folder">02-v2.0开发/</span></div>
+        <div><span class="pipe">├── </span><span class="file">README.md</span><span class="comment">v2.0 功能清单</span></div>
+        <div><span class="pipe">├── </span><span class="folder">src/</span></div>
+        <div><span class="pipe">└── </span><span class="folder">YYYY-MM-DD/</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 分类4: Skill 工具 -->
+  <div class="panel panel-c4">
+    <div class="panel-header">03-skill工具</div>
+    <div class="panel-body">
+      <div class="tree">
+        <div><span class="folder">03-skill工具/</span></div>
+        <div><span class="pipe">├── </span><span class="file">README.md</span><span class="comment">Skill 工具规划</span></div>
+        <div><span class="pipe">├── </span><span class="folder">reviewer-agent/</span><span class="comment">审阅 Agent Skill</span></div>
+        <div><span class="pipe">├── </span><span class="folder">reminder-agent/</span><span class="comment">催办 Agent Skill</span></div>
+        <div><span class="pipe">├── </span><span class="folder">todo-agent/</span><span class="comment">待办 Agent Skill</span></div>
+        <div><span class="pipe">├── </span><span class="folder">report-agent/</span><span class="comment">报告 Agent Skill</span></div>
+        <div><span class="pipe">└── </span><span class="folder">insight-agent/</span><span class="comment">解读 Agent Skill</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 版本时间线 -->
+  <div class="version-timeline">
+    <div class="ver-card current">
+      <div class="ver-title" style="color:#185FA5;">v1.0</div>
+      <div class="ver-status">核心 MVP · 待开发</div>
+      <div style="font-size:10px;color:#888;margin-top:6px;">工作事项管理 / 周报提交<br>AI审阅 / 催办 / 企微集成</div>
+    </div>
+    <div class="ver-card future">
+      <div class="ver-title" style="color:#888;">v2.0</div>
+      <div class="ver-status">增强功能 · 待规划</div>
+      <div style="font-size:10px;color:#999;margin-top:6px;">报告Agent / 解读Agent<br>月报季报年报 / PDF输出</div>
+    </div>
+    <div class="ver-card future">
+      <div class="ver-title" style="color:#999;">v3.0</div>
+      <div class="ver-status">扩展功能 · 待规划</div>
+      <div style="font-size:10px;color:#999;margin-top:6px;">PPT生成<br>数据分析看板</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
