@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WorkReport Pro · 工作汇报系统</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#f5f7fa;color:#333;line-height:1.6}
+.container{max-width:900px;margin:0 auto;padding:20px}
+
+/* 顶部 */
+.header{background:linear-gradient(135deg,#534AB7,#7F77DD);color:#fff;padding:20px 24px;border-radius:14px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between}
+.header h1{font-size:18px;font-weight:600}
+.header .user-info{font-size:13px;opacity:.9}
+
+/* 菜单 */
+.nav{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.nav-btn{padding:8px 20px;border-radius:20px;border:1px solid #e0e0e0;background:#fff;font-size:13px;cursor:pointer;transition:.2s;color:#666}
+.nav-btn:hover{border-color:#534AB7;color:#534AB7}
+.nav-btn.active{background:#534AB7;color:#fff;border-color:#534AB7}
+
+/* 卡片 */
+.card{background:#fff;border-radius:12px;border:1px solid #eee;padding:20px 24px;margin-bottom:16px}
+.card h2{font-size:15px;font-weight:600;margin-bottom:12px;color:#1a1a1a}
+.card h3{font-size:14px;font-weight:600;margin-bottom:8px;color:#333}
+
+/* 选择角色面板 */
+.role-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.role-card{padding:16px;border-radius:10px;border:2px solid #eee;cursor:pointer;transition:.2s;text-align:center}
+.role-card:hover{border-color:#534AB7;background:#f8f6ff}
+.role-card.selected{border-color:#534AB7;background:#EEEDFE}
+.role-card .avatar{width:44px;height:44px;border-radius:50%;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:600}
+.role-card .name{font-size:15px;font-weight:600}
+.role-card .info{font-size:11px;color:#888;margin-top:2px}
+
+/* 工作事项列表 */
+.item-row{display:flex;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid #f0f0f0}
+.item-row:last-child{border-bottom:none}
+.item-avatar{width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:600}
+.item-info{flex:1}
+.item-name{font-size:14px;font-weight:600}
+.item-meta{font-size:11px;color:#888;margin-top:2px}
+.item-cat{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:500;display:inline-block;margin-right:6px}
+.cat-key{background:#EEEDFE;color:#534AB7}
+.cat-self{background:#E6F1FB;color:#185FA5}
+.cat-normal{background:#f0f0f0;color:#666}
+
+/* 表单 */
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:4px}
+.form-group textarea,.form-group input,.form-group select{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;font-family:inherit;resize:vertical}
+.form-group textarea:focus,.form-group input:focus{border-color:#534AB7;outline:none;box-shadow:0 0 0 3px rgba(83,74,183,.1)}
+textarea{min-height:80px}
+
+/* 按钮 */
+.btn{padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:.2s}
+.btn-primary{background:#534AB7;color:#fff}
+.btn-primary:hover{background:#3C3489}
+.btn-outline{background:#fff;color:#534AB7;border:2px solid #534AB7}
+.btn-outline:hover{background:#EEEDFE}
+.btn-sm{padding:4px 12px;font-size:11px}
+.btn-green{background:#0F6E56;color:#fff}
+.btn-gray{background:#f0f0f0;color:#666}
+
+.btn-group{display:flex;gap:8px;margin-top:16px}
+
+/* AI审阅面板 */
+.ai-panel{background:#f0f7ff;border:1px solid #b5d4f4;border-radius:10px;padding:16px;margin-top:16px}
+.ai-panel .ai-title{font-size:13px;font-weight:600;color:#185FA5;margin-bottom:10px}
+.ai-msg{padding:8px 12px;border-radius:8px;margin-bottom:8px;font-size:12px;line-height:1.6}
+.ai-msg.warning{background:#fff3cd;color:#854F0B;border-left:3px solid #EF9F27}
+.ai-msg.suggestion{background:#e8f4fd;color:#0C447C;border-left:3px solid #378ADD}
+.ai-msg.question{background:#f0faf6;color:#085041;border-left:3px solid #0F6E56}
+.ai-msg.compress{background:#fdf8ed;color:#854F0B;border-left:3px solid #BA7517}
+.ai-btn{font-size:11px;padding:3px 10px;border-radius:12px;border:1px solid #ccc;background:#fff;cursor:pointer;margin-top:4px}
+
+/* 进度条 */
+.progress-bar{display:flex;gap:8px;align-items:center;margin-top:6px}
+.progress-step{flex:1;height:4px;background:#e0e0e0;border-radius:2px}
+.progress-step.done{background:#534AB7}
+
+/* 状态标签 */
+.status-badge{padding:3px 10px;border-radius:10px;font-size:11px;font-weight:500}
+.status-draft{background:#fff3cd;color:#854F0B}
+.status-submitted{background:#d4edda;color:#0F6E56}
+.status-overdue{background:#fcebeb;color:#A32D2D}
+
+.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:100}
+.modal-content{background:#fff;border-radius:14px;padding:24px;max-width:500px;width:90%}
+.hidden{display:none}
+
+.empty-state{text-align:center;padding:40px;color:#999;font-size:14px}
+
+/* 管理者看板 */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:16px}
+.stat-card{background:#f8f9fa;border-radius:10px;padding:14px;text-align:center}
+.stat-card .stat-num{font-size:24px;font-weight:700}
+.stat-card .stat-label{font-size:11px;color:#888;margin-top:4px}
+</style>
+</head>
+<body>
+<div class="container" id="app">
+  <!-- 头部 -->
+  <div class="header">
+    <h1>WorkReport Pro</h1>
+    <div class="user-info" id="headerUser">请选择身份</div>
+  </div>
+
+  <!-- 页面切换菜单 -->
+  <div class="nav" id="nav" style="display:none">
+    <button class="nav-btn active" data-page="report">填写周报</button>
+    <button class="nav-btn" data-page="items">我的工作事项</button>
+    <button class="nav-btn" data-page="manager" id="navManager" style="display:none">团队管理</button>
+  </div>
+
+  <!-- 主内容区 -->
+  <div id="mainContent">
+    <!-- 角色选择页面 -->
+    <div id="page-select">
+      <div class="card">
+        <h2>选择你的身份</h2>
+        <p style="font-size:13px;color:#888;margin-bottom:16px">请选择你的身份以进入工作汇报系统</p>
+        <div class="role-grid" id="roleGrid"></div>
+      </div>
+    </div>
+
+    <!-- 周报填写页面 -->
+    <div id="page-report" style="display:none">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <h2>本周工作汇报 <span style="font-size:12px;color:#888;font-weight:400" id="weekLabel"></span></h2>
+          <button class="btn btn-green" onclick="submitReview()">提交前AI审阅</button>
+        </div>
+        <div class="ai-panel hidden" id="aiPanel"></div>
+        <div id="reportItems"></div>
+        <div class="btn-group">
+          <button class="btn btn-outline" onclick="saveDraft()">保存草稿</button>
+          <button class="btn btn-primary" onclick="submitReport()">提交周报</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 我的工作事项 -->
+    <div id="page-items" style="display:none">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <h2>我的工作事项</h2>
+          <button class="btn btn-primary btn-sm" onclick="showAddItem()">+ 新增事项</button>
+        </div>
+        <div id="myItemsList"></div>
+        <div id="addItemForm" class="hidden" style="margin-top:16px;padding-top:16px;border-top:1px solid #eee">
+          <h3>新增工作事项</h3>
+          <div class="form-group">
+            <label>事项名称</label>
+            <input id="newItemName" placeholder="输入工作事项名称">
+          </div>
+          <div class="form-group">
+            <label>分类</label>
+            <select id="newItemCategory">
+              <option value="年度重点工作">年度重点工作</option>
+              <option value="自主专项工作">自主专项工作</option>
+              <option value="常规工作">常规工作</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>关联年度目标（可选）</label>
+            <select id="newItemGoal"></select>
+          </div>
+          <div class="form-group">
+            <label>工作目标/背景描述</label>
+            <textarea id="newItemDesc" placeholder="简要描述这项工作的目标和背景"></textarea>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="addItem()">确认添加</button>
+            <button class="btn btn-gray" onclick="hideAddItem()">取消</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 团队管理页面 -->
+    <div id="page-manager" style="display:none">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <h2>团队周报提交状态 <span style="font-size:12px;color:#888;font-weight:400" id="managerWeekLabel"></span></h2>
+          <button class="btn btn-outline btn-sm" onclick="loadStatus()">刷新状态</button>
+        </div>
+        <div id="managerStatus"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ========== 全局状态 ==========
+let currentUser = null;
+let currentWeekStart = '';
+let allUsers = [];
+let allGoals = [];
+let allItems = [];
+
+// 计算本周一日期
+function getMonday() {
+  const d = new Date();
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(d.setDate(diff));
+  return monday.toISOString().split('T')[0];
+}
+
+// ========== 初始化 ==========
+async function init() {
+  currentWeekStart = getMonday();
+  document.getElementById('weekLabel').textContent = `本周: ${currentWeekStart}`;
+  document.getElementById('managerWeekLabel').textContent = `本周: ${currentWeekStart}`;
+
+  // 加载用户
+  const usersRes = await fetch('/api/users');
+  allUsers = await usersRes.json();
+
+  // 加载目标
+  const goalsRes = await fetch('/api/goals');
+  allGoals = await goalsRes.json();
+
+  // 渲染角色选择
+  const grid = document.getElementById('roleGrid');
+  grid.innerHTML = allUsers.map(u => `
+    <div class="role-card" onclick="selectUser(${u.id})" data-uid="${u.id}">
+      <div class="avatar" style="background:${u.avatar_color}">${u.name[0]}</div>
+      <div class="name">${u.name}</div>
+      <div class="info">${u.role}${u.business_line ? ' · ' + u.business_line : ''}${u.is_manager ? ' (管理者)' : ''}</div>
+    </div>
+  `).join('');
+}
+
+async function selectUser(uid) {
+  currentUser = allUsers.find(u => u.id === uid);
+
+  // 高亮选中
+  document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
+  document.querySelector(`[data-uid="${uid}"]`).classList.add('selected');
+
+  document.getElementById('headerUser').textContent = `当前: ${currentUser.name} (${currentUser.role})`;
+
+  // 显示菜单
+  document.getElementById('nav').style.display = 'flex';
+  if (currentUser.is_manager) {
+    document.getElementById('navManager').style.display = 'inline';
+  }
+
+  // 加载数据
+  const itemsRes = await fetch(`/api/items?user_id=${uid}`);
+  allItems = await itemsRes.json();
+
+  // 默认打开周报页面
+  switchPage('report');
+}
+
+// ========== 页面切换 ==========
+function switchPage(page) {
+  document.querySelectorAll('#page-report,#page-items,#page-manager,#page-select').forEach(p => p.style.display = 'none');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+  if (page === 'select') {
+    document.getElementById('page-select').style.display = 'block';
+    return;
+  }
+
+  document.getElementById(`page-${page}`).style.display = 'block';
+  document.querySelector(`[data-page="${page}"]`).classList.add('active');
+
+  if (page === 'report') loadReportForm();
+  if (page === 'items') loadMyItems();
+  if (page === 'manager') loadStatus();
+}
+
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchPage(btn.dataset.page));
+});
+
+// ========== 周报填写 ==========
+async function loadReportForm() {
+  if (!currentUser) return;
+  const res = await fetch(`/api/reports/my-progress?user_id=${currentUser.id}&week_start=${currentWeekStart}`);
+  const data = await res.json();
+
+  const container = document.getElementById('reportItems');
+  container.innerHTML = data.map(d => `
+    <div class="item-row" data-item-id="${d.work_item_id}">
+      <div class="item-avatar" style="background:${currentUser.avatar_color}">${d.work_item_name[0]}</div>
+      <div class="item-info" style="flex:1">
+        <div class="item-name">${d.work_item_name}</div>
+        <div class="item-meta">
+          <span class="item-cat cat-${d.category === '年度重点工作' ? 'key' : d.category === '自主专项工作' ? 'self' : 'normal'}">${d.category}</span>
+          ${d.status}
+          ${d.last_week_next_plan ? '<br><span style="color:#BA7517">上周计划: ' + d.last_week_next_plan.substring(0,60) + '...</span>' : ''}
+        </div>
+        <div style="margin-top:8px">
+          <div class="form-group">
+            <label>本周进展 <span style="color:#888;font-weight:400">（做了什么、取得了什么成果）</span></label>
+            <textarea class="progress-input" data-field="progress" data-item-id="${d.work_item_id}">${d.progress}</textarea>
+          </div>
+          <div class="form-group">
+            <label>下阶段计划</label>
+            <textarea class="progress-input" data-field="next_plan" data-item-id="${d.work_item_id}">${d.next_plan}</textarea>
+          </div>
+          <div class="form-group">
+            <label>遇到的问题/需要支持</label>
+            <textarea class="progress-input" data-field="blockers" data-item-id="${d.work_item_id}">${d.blockers}</textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function collectFormData() {
+  const data = [];
+  document.querySelectorAll('.item-row').forEach(row => {
+    const itemId = parseInt(row.dataset.itemId);
+    const progress = row.querySelector('[data-field="progress"]')?.value || '';
+    const nextPlan = row.querySelector('[data-field="next_plan"]')?.value || '';
+    const blockers = row.querySelector('[data-field="blockers"]')?.value || '';
+    data.push({ work_item_id: itemId, progress, next_plan: nextPlan, blockers });
+  });
+  return data;
+}
+
+async function saveDraft() {
+  const entries = collectFormData();
+  const res = await fetch(`/api/reports/save-draft?user_id=${currentUser.id}&week_start=${currentWeekStart}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ entries }),
+  });
+  const result = await res.json();
+  alert(result.message || '草稿已保存');
+}
+
+async function submitReview() {
+  // 先保存草稿
+  await saveDraft();
+
+  // 调用AI审阅
+  const res = await fetch('/api/agent/review', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user_id: currentUser.id, week_start: currentWeekStart }),
+  });
+  const data = await res.json();
+
+  const panel = document.getElementById('aiPanel');
+  panel.classList.remove('hidden');
+
+  if (data.suggestions.length === 0) {
+    panel.innerHTML = '<div class="ai-title">AI 审阅完成</div><p style="font-size:13px;color:#0F6E56;">所有内容看起来都不错，可以直接提交。</p>';
+    return;
+  }
+
+  let html = `<div class="ai-title">AI 审阅建议 (${data.total_suggestions}条)</div>`;
+  data.suggestions.forEach(s => {
+    const typeLabel = { warning: '需注意', suggestion: '优化建议', question: '追问确认', reminder: '提醒', compress: '内容精简' }[s.type] || '建议';
+    html += `<div class="ai-msg ${s.type}">
+      <strong>${typeLabel} - ${s.work_item_name}</strong><br>
+      ${s.message}
+    </div>`;
+  });
+  html += '<p style="font-size:12px;color:#888;margin-top:8px">以上为AI建议，请根据实际情况修改后提交。</p>';
+  panel.innerHTML = html;
+}
+
+async function submitReport() {
+  const entries = collectFormData();
+  const res = await fetch(`/api/reports/submit?user_id=${currentUser.id}&week_start=${currentWeekStart}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ entries }),
+  });
+  const result = await res.json();
+  alert(result.message || '提交成功');
+}
+
+// ========== 工作事项管理 ==========
+async function loadMyItems() {
+  if (!currentUser) return;
+  const container = document.getElementById('myItemsList');
+  if (allItems.length === 0) {
+    container.innerHTML = '<div class="empty-state">暂无工作事项，点击右上角新增</div>';
+    return;
+  }
+  container.innerHTML = allItems.map(item => `
+    <div class="item-row">
+      <div class="item-avatar" style="background:${currentUser.avatar_color}">${item.name[0]}</div>
+      <div class="item-info">
+        <div class="item-name">${item.name}</div>
+        <div class="item-meta">
+          <span class="item-cat cat-${item.category === '年度重点工作' ? 'key' : item.category === '自主专项工作' ? 'self' : 'normal'}">${item.category}</span>
+          ${item.goal_name ? '→ ' + item.goal_name : ''}
+          &nbsp;|&nbsp; ${item.status}
+        </div>
+        ${item.target_desc ? '<div style="font-size:12px;color:#888;margin-top:4px">' + item.target_desc + '</div>' : ''}
+      </div>
+    </div>
+  `).join('');
+
+  // 填充目标下拉
+  const goalSelect = document.getElementById('newItemGoal');
+  goalSelect.innerHTML = '<option value="">不关联目标</option>' + allGoals.map(g => `<option value="${g.id}">${g.name} (${g.weight}%)</option>`).join('');
+}
+
+function showAddItem() { document.getElementById('addItemForm').classList.remove('hidden'); }
+function hideAddItem() { document.getElementById('addItemForm').classList.add('hidden'); }
+
+async function addItem() {
+  const name = document.getElementById('newItemName').value.trim();
+  const category = document.getElementById('newItemCategory').value;
+  const goalId = document.getElementById('newItemGoal').value;
+  const desc = document.getElementById('newItemDesc').value.trim();
+
+  if (!name) { alert('请输入事项名称'); return; }
+
+  const res = await fetch('/api/items', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name, category, owner_id: currentUser.id,
+      goal_id: goalId ? parseInt(goalId) : null, target_desc: desc,
+    }),
+  });
+  const result = await res.json();
+  if (result.error) { alert(result.error); return; }
+
+  // 刷新
+  const itemsRes = await fetch(`/api/items?user_id=${currentUser.id}`);
+  allItems = await itemsRes.json();
+  document.getElementById('newItemName').value = '';
+  document.getElementById('newItemDesc').value = '';
+  hideAddItem();
+  loadMyItems();
+}
+
+// ========== 管理者看板 ==========
+async function loadStatus() {
+  if (!currentUser || !currentUser.is_manager) return;
+  const res = await fetch(`/api/agent/submit-status?week_start=${currentWeekStart}`);
+  const data = await res.json();
+
+  const container = document.getElementById('managerStatus');
+  let html = '<div class="stats-row">';
+  html += `<div class="stat-card"><div class="stat-num" style="color:#0F6E56">${data.submitted.length}</div><div class="stat-label">已提交</div></div>`;
+  html += `<div class="stat-card"><div class="stat-num" style="color:#A32D2D">${data.not_submitted.length}</div><div class="stat-label">未提交</div></div>`;
+  html += `<div class="stat-card"><div class="stat-num" style="color:#534AB7">${data.total}</div><div class="stat-label">总人数</div></div>`;
+  html += '</div>';
+
+  html += '<div style="margin-top:12px">';
+  if (data.submitted.length > 0) {
+    html += '<div style="font-size:13px;font-weight:600;color:#0F6E56;margin-bottom:6px">已提交：' + data.submitted.join('、') + '</div>';
+  }
+  if (data.not_submitted.length > 0) {
+    html += '<div style="font-size:13px;font-weight:600;color:#A32D2D;margin-bottom:4px">未提交：</div>';
+    data.not_submitted.forEach(m => {
+      html += `<div style="font-size:12px;color:#666;padding:4px 0">${m.name} (${m.role}${m.business_line ? ' · ' + m.business_line : ''})</div>`;
+    });
+  }
+  html += '</div>';
+
+  if (data.all_submitted) {
+    html += '<div style="text-align:center;padding:20px;color:#0F6E56;font-size:16px;font-weight:600">全员已提交，可以生成周报了</div>';
+  }
+
+  container.innerHTML = html;
+}
+
+// 启动
+init();
+</script>
+</body>
+</html>
