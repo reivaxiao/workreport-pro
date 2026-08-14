@@ -1,6 +1,6 @@
 # Skill 工具
 
-本目录存放 WorkReport Pro 专属的 Agent Skill 工具集。
+本目录存放 WorkReport HR-Pro 专属的 Agent Skill 工具集。
 
 ## 已有 Skill
 

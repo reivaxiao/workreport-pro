@@ -20,7 +20,7 @@
 
 ### 1.3 产品名称
 
-WorkReport Pro
+WorkReport HR-Pro
 
 ---
 

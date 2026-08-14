@@ -1,4 +1,4 @@
-# WorkReport Pro - 工作汇报系统
+# WorkReport HR-Pro - 工作汇报系统
 
 基于 AI Agent 的智能工作汇报与聚合系统，解决传统周报催办低效、格式不统一、信息碎片化、总结汇总耗时等痛点。
 

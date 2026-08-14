@@ -1,4 +1,4 @@
-"""WorkReport Pro - 主应用程序"""
+"""WorkReport HR-Pro - 主应用程序"""
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,7 +6,7 @@ from pathlib import Path
 from models import init_db, seed_data
 
 # 创建应用
-app = FastAPI(title="WorkReport Pro", description="智能工作汇报系统", version="1.0.0")
+app = FastAPI(title="WorkReport HR-Pro", description="智能工作汇报系统", version="1.0.0")
 
 # CORS
 app.add_middleware(

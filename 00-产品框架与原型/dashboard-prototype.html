@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WorkReport HR-Pro · 管理者工作看板</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#f5f6f8;color:#333;line-height:1.6}
+
+/* 顶部导航 */
+.topbar{background:linear-gradient(135deg,#4a3fb0,#6f63d6);color:#fff;padding:16px 28px;display:flex;align-items:center;justify-content:space-between}
+.topbar .left{display:flex;align-items:center;gap:14px}
+.topbar .logo{font-size:18px;font-weight:600}
+.topbar .breadcrumb{font-size:12px;opacity:.8}
+.live-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:16px;padding:4px 12px;font-size:11px}
+.live-dot{width:7px;height:7px;border-radius:50%;background:#4ade80;animation:blink 1.5s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.topbar .right{font-size:13px;opacity:.9}
+
+.container{max-width:1080px;margin:0 auto;padding:20px}
+
+/* 提交状态条 */
+.status-bar{background:#fff;border-radius:12px;padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;gap:20px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.status-bar .label{font-size:13px;font-weight:600;color:#555}
+.status-pills{display:flex;gap:8px;flex-wrap:wrap}
+.pill{padding:4px 12px;border-radius:14px;font-size:12px;display:flex;align-items:center;gap:6px}
+.pill.done{background:#e6f7ef;color:#0f6e56}
+.pill.pending{background:#fdeaea;color:#a32d2d}
+.pill .dot{width:6px;height:6px;border-radius:50%}
+.pill.done .dot{background:#0f6e56}
+.pill.pending .dot{background:#e24b4a}
+
+/* 关键指标 */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.metric{background:#fff;border-radius:12px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.metric .m-label{font-size:12px;color:#888}
+.metric .m-value{font-size:26px;font-weight:700;margin:4px 0 2px}
+.metric .m-trend{font-size:11px}
+.metric .m-trend.up{color:#0f6e56}
+.metric .m-trend.down{color:#a32d2d}
+
+/* 目标区块 */
+.section-title{font-size:15px;font-weight:600;margin:24px 0 12px;color:#1a1a1a;display:flex;align-items:center;gap:8px}
+.section-title .bar{width:4px;height:16px;background:#4a3fb0;border-radius:2px}
+
+.goal-card{background:#fff;border-radius:12px;margin-bottom:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.goal-header{padding:14px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #f0f0f0}
+.goal-weight{background:#eeeafc;color:#4a3fb0;font-size:12px;font-weight:600;padding:3px 10px;border-radius:12px;min-width:48px;text-align:center}
+.goal-name{font-size:14px;font-weight:600;flex:1}
+.goal-count{font-size:12px;color:#888}
+
+.work-item{padding:12px 20px;border-bottom:1px solid #f6f6f6;display:flex;align-items:flex-start;gap:14px}
+.work-item:last-child{border-bottom:none}
+.work-item .item-main{flex:1}
+.work-item .item-top{display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap}
+.item-name{font-size:13px;font-weight:600}
+.item-owner{font-size:11px;color:#888;background:#f2f2f2;padding:1px 8px;border-radius:8px}
+
+/* 标签 */
+.tag{font-size:10px;padding:2px 8px;border-radius:8px;font-weight:500}
+.tag-imp-high{background:#fdeaea;color:#a32d2d}
+.tag-imp-mid{background:#fff7e6;color:#ba7517}
+.tag-imp-low{background:#f2f2f2;color:#888}
+.tag-cat-key{background:#eeeafc;color:#4a3fb0}
+.tag-cat-self{background:#e6f1fb;color:#185fa5}
+.tag-cat-normal{background:#f2f2f2;color:#666}
+
+.item-progress{font-size:12px;color:#555;margin-top:2px}
+.item-progress .highlight{color:#4a3fb0;font-weight:600}
+
+/* 板块维度 */
+.board-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:20px}
+.board-card{background:#fff;border-radius:12px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.board-card .board-title{font-size:13px;font-weight:600;color:#4a3fb0;margin-bottom:10px}
+.board-card ul{list-style:none}
+.board-card li{font-size:12px;color:#555;padding:4px 0;display:flex;justify-content:space-between}
+
+@media(max-width:760px){.metrics{grid-template-columns:repeat(2,1fr)}.board-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="left">
+    <span class="logo">WorkReport HR-Pro</span>
+    <span class="breadcrumb">/ 管理者工作看板</span>
+    <span class="live-badge"><span class="live-dot"></span>实时更新</span>
+  </div>
+  <div class="right">2026年8月10日 — 8月14日 · 第33周</div>
+</div>
+
+<div class="container">
+  <!-- 提交状态 -->
+  <div class="status-bar">
+    <span class="label">本周提交状态</span>
+    <div class="status-pills">
+      <span class="pill done"><span class="dot"></span>肖凌华 ✓</span>
+      <span class="pill done"><span class="dot"></span>程宇欣 ✓</span>
+      <span class="pill done"><span class="dot"></span>李微微 ✓</span>
+      <span class="pill pending"><span class="dot"></span>高丽茹 未提交</span>
+      <span class="pill pending"><span class="dot"></span>李雯 未提交</span>
+    </div>
+  </div>
+
+  <!-- 关键指标 -->
+  <div class="metrics">
+    <div class="metric">
+      <div class="m-label">关键岗位达成率</div>
+      <div class="m-value" style="color:#4a3fb0">72%</div>
+      <div class="m-trend up">↑ 本周 +5%</div>
+    </div>
+    <div class="metric">
+      <div class="m-label">本周到岗人数</div>
+      <div class="m-value" style="color:#0f6e56">12人</div>
+      <div class="m-trend up">↑ 较上周 +3人</div>
+    </div>
+    <div class="metric">
+      <div class="m-label">进行中工作事项</div>
+      <div class="m-value">9项</div>
+      <div class="m-trend" style="color:#888">年度重点 6 · 专项 1 · 常规 2</div>
+    </div>
+    <div class="metric">
+      <div class="m-label">本周新增临时工作</div>
+      <div class="m-value" style="color:#ba7517">3项</div>
+      <div class="m-trend" style="color:#888">已纳入工作列表</div>
+    </div>
+  </div>
+
+  <!-- 按年度目标维度 -->
+  <div class="section-title"><span class="bar"></span>按年度目标维度</div>
+
+  <!-- 目标1 -->
+  <div class="goal-card">
+    <div class="goal-header">
+      <span class="goal-weight">20%</span>
+      <span class="goal-name">目标一 · 聚焦经营战略推动组织和人才规划布局</span>
+      <span class="goal-count">关联 3 项工作</span>
+    </div>
+    <div class="work-item">
+      <div class="item-main">
+        <div class="item-top">
+          <span class="item-name">营销板块招聘交付</span>
+          <span class="tag tag-cat-key">年度重点</span>
+          <span class="tag tag-imp-high">高</span>
+          <span class="item-owner">李微微 · 营销板块</span>
+        </div>
+        <div class="item-progress">本周到岗 <span class="highlight">5人</span>，累计 15 人，达成率 <span class="highlight">75%</span>；下周重点：2个急缺算法岗</div>
+      </div>
+    </div>
+    <div class="work-item">
+      <div class="item-main">
+        <div class="item-top">
+          <span class="item-name">产研板块招聘交付</span>
+          <span class="tag tag-cat-key">年度重点</span>
+          <span class="tag tag-imp-high">高</span>
+          <span class="item-owner">高丽茹 · 产研板块</span>
+        </div>
+        <div class="item-progress">本周到岗 <span class="highlight">4人</span>，累计 12 人，达成率 <span class="highlight">80%</span>；下周重点：SaaS 产品岗</div>
+      </div>
+    </div>
+    <div class="work-item">
+      <div class="item-main">
+        <div class="item-top">
+          <span class="item-name">运营板块招聘交付</span>
+          <span class="tag tag-cat-key">年度重点</span>
+          <span class="tag tag-imp-high">高</span>
+          <span class="item-owner">李雯 · 运营板块</span>
+        </div>
+        <div class="item-progress">本周到岗 <span class="highlight">3人</span>，累计 9 人，达成率 <span class="highlight">60%</span>；下周重点：运营储备干部</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 目标3 -->
+  <div class="goal-card">
+    <div class="goal-header">
+      <span class="goal-weight">30%</span>
+      <span class="goal-name">目标三 · 深入业务一线，推动组织/人才/激励专项方案</span>
+      <span class="goal-count">关联 2 项工作</span>
+    </div>
+    <div class="work-item">
+      <div class="item-main">
+        <div class="item-top">
+          <span class="item-name">产研任职资格重构</span>
+          <span class="tag tag-cat-self">自主专项</span>
+          <span class="tag tag-imp-high">高</span>
+          <span class="item-owner">高丽茹 · 产研板块</span>
+        </div>
+        <div class="item-progress">完成任职资格标准初稿，进入部门评审；目标实现人才标签化</div>
+      </div>
+    </div>
+    <div class="work-item">
+      <div class="item-main">
+        <div class="item-top">
+          <span class="item-name">运营岗职序列优化</span>
+          <span class="tag tag-cat-key">年度重点</span>
+          <span class="tag tag-imp-high">高</span>
+          <span class="item-owner">李雯 · 运营板块</span>
+        </div>
+        <div class="item-progress">完成岗职序列梳理，输出灵活用工方案初稿</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 目标5 -->
+  <div class="goal-card">
+    <div class="goal-header">
+      <span class="goal-weight">5%</span>
+      <span class="goal-name">目标五 · 夯实基础设施建设 + AI 提效探索</span>
+      <span class="goal-count">关联 1 项工作</span>
+    </div>
+    <div class="work-item">
+      <div class="item-main">
+        <div class="item-top">
+          <span class="item-name">招聘数字化工具 2.0</span>
+          <span class="tag tag-cat-key">年度重点</span>
+          <span class="tag tag-imp-high">高</span>
+          <span class="item-owner">程宇欣 · COE</span>
+        </div>
+        <div class="item-progress">完成系统架构设计，进入开发阶段；AI 招聘场景探索启动</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 目标6 -->
+  <div class="goal-card">
+    <div class="goal-header">
+      <span class="goal-weight">10%</span>
+      <span class="goal-name">目标六 · 加强 COE 与 HRBP 协同 + 团队骨干保留</span>
+      <span class="goal-count">关联 1 项工作</span>
+    </div>
+    <div class="work-item">
+      <div class="item-main">
+        <div class="item-top">
+          <span class="item-name">团队工作汇报机制搭建</span>
+          <span class="tag tag-cat-key">年度重点</span>
+          <span class="tag tag-imp-high">高</span>
+          <span class="item-owner">肖凌华 · 管理者</span>
+        </div>
+        <div class="item-progress">工作汇报系统上线试运行，本看板即为成果之一</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 常规工作（简略呈现） -->
+  <div class="section-title"><span class="bar"></span>常规工作（简略呈现）</div>
+  <div class="goal-card">
+    <div class="work-item">
+      <div class="item-main">
+        <div class="item-top">
+          <span class="item-name">招聘制度修订</span>
+          <span class="tag tag-cat-normal">常规</span>
+          <span class="tag tag-imp-mid">中</span>
+          <span class="item-owner">程宇欣</span>
+        </div>
+      </div>
+    </div>
+    <div class="work-item">
+      <div class="item-main">
+        <div class="item-top">
+          <span class="item-name">营销板块员工访谈</span>
+          <span class="tag tag-cat-normal">常规</span>
+          <span class="tag tag-imp-mid">中</span>
+          <span class="item-owner">李微微</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 按板块维度 -->
+  <div class="section-title"><span class="bar"></span>按业务板块维度</div>
+  <div class="board-grid">
+    <div class="board-card">
+      <div class="board-title">营销板块 · 李微微</div>
+      <ul>
+        <li><span>招聘交付</span><span>到岗5人 · 达成75%</span></li>
+        <li><span>员工访谈</span><span>本周2场</span></li>
+      </ul>
+    </div>
+    <div class="board-card">
+      <div class="board-title">产研板块 · 高丽茹</div>
+      <ul>
+        <li><span>招聘交付</span><span>到岗4人 · 达成80%</span></li>
+        <li><span>任职资格重构</span><span>初稿完成</span></li>
+      </ul>
+    </div>
+    <div class="board-card">
+      <div class="board-title">运营板块 · 李雯</div>
+      <ul>
+        <li><span>招聘交付</span><span>到岗3人 · 达成60%</span></li>
+        <li><span>岗职序列优化</span><span>梳理完成</span></li>
+      </ul>
+    </div>
+    <div class="board-card">
+      <div class="board-title">COE · 程宇欣</div>
+      <ul>
+        <li><span>招聘数字化2.0</span><span>进入开发</span></li>
+        <li><span>招聘制度修订</span><span>进行中</span></li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
