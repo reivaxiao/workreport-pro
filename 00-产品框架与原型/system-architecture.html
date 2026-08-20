@@ -3,458 +3,284 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>工作汇报系统架构框架</title>
+<title>WorkReport HR-Pro · 系统架构</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
-    background: #f5f5f5;
-    color: #333;
-    padding: 32px 24px;
-    line-height: 1.6;
-  }
-  .container {
-    max-width: 960px;
-    margin: 0 auto;
-  }
-  h1 {
-    font-size: 22px;
-    font-weight: 600;
-    text-align: center;
-    margin-bottom: 8px;
-    color: #1a1a1a;
-  }
-  .subtitle {
-    text-align: center;
-    font-size: 13px;
-    color: #888;
-    margin-bottom: 36px;
-  }
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#f5f6f8;color:#333;line-height:1.6;padding:28px 20px 50px}
+.container{max-width:960px;margin:0 auto}
+h1{font-size:22px;font-weight:600;text-align:center;margin-bottom:4px;color:#1a1a1a}
+.subtitle{text-align:center;font-size:13px;color:#888;margin-bottom:24px}
 
-  .layer {
-    margin-bottom: 20px;
-    border-radius: 14px;
-    overflow: hidden;
-    border: 1px solid #e0e0e0;
-    background: #fff;
-  }
-  .layer-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px 20px;
-    font-size: 13px;
-    font-weight: 600;
-    color: #fff;
-  }
-  .layer-body {
-    padding: 16px 20px;
-  }
+/* 数据管道横幅 */
+.pipeline-banner{background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:16px 20px;margin-bottom:20px}
+.pipeline-banner .pb-title{font-size:13px;font-weight:600;color:#4a3fb0;margin-bottom:10px}
+.pipeline-steps{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pipe-step{background:#f3f0ff;border:1px solid #d5ccff;border-radius:8px;padding:8px 14px;font-size:12px;color:#3c3489;text-align:center}
+.pipe-step.stage2{background:#f0faf6;border-color:#9fe1cb;color:#085041}
+.pipe-step .stage-tag{font-size:10px;opacity:.7;display:block}
+.pipe-arrow{color:#999;font-size:14px}
 
-  .layer-user .layer-header { background: #534AB7; }
-  .layer-interact .layer-header { background: #5F5E5A; }
-  .layer-agent .layer-header { background: #185FA5; }
-  .layer-data .layer-header { background: #5F5E5A; }
-  .layer-pipeline .layer-header { background: #0F6E56; }
+.layer{margin-bottom:16px;border-radius:14px;overflow:hidden;border:1px solid #e0e0e0;background:#fff}
+.layer-head{padding:11px 20px;font-size:13px;font-weight:600;color:#fff;display:flex;align-items:center;gap:8px}
+.layer-body{padding:16px 20px}
 
-  .user-grid {
-    display: flex;
-    gap: 16px;
-    align-items: stretch;
-  }
-  .manager-card {
-    flex: 0 0 140px;
-    background: linear-gradient(135deg, #534AB7, #7F77DD);
-    border-radius: 10px;
-    padding: 14px;
-    color: #fff;
-    text-align: center;
-  }
-  .manager-card .role { font-size: 11px; opacity: 0.8; margin-bottom: 4px; }
-  .manager-card .name { font-size: 15px; font-weight: 600; }
-  .member-cards {
-    flex: 1;
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-  .member-card {
-    flex: 1;
-    min-width: 130px;
-    background: #f8f6ff;
-    border: 1px solid #d5d1f0;
-    border-radius: 10px;
-    padding: 12px;
-    text-align: center;
-  }
-  .member-card .name { font-size: 13px; font-weight: 600; color: #3C3489; }
-  .member-card .role { font-size: 11px; color: #888; margin-top: 2px; }
+.l-user .layer-head{background:#534ab7}
+.l-interact .layer-head{background:#5f5e5a}
+.l-agent .layer-head{background:#185fa5}
+.l-data .layer-head{background:#5f5e5a}
+.l-present .layer-head{background:#0f6e56}
 
-  .interact-row {
-    display: flex;
-    gap: 16px;
-  }
-  .interact-item {
-    flex: 1;
-    background: #f8f8f6;
-    border: 1px solid #e0e0d8;
-    border-radius: 10px;
-    padding: 14px;
-    text-align: center;
-    font-size: 14px;
-    font-weight: 500;
-    color: #444;
-  }
-  .interact-item .icon { font-size: 20px; margin-bottom: 4px; }
+/* 用户层 */
+.user-grid{display:flex;gap:12px;align-items:stretch}
+.manager{flex:0 0 130px;background:linear-gradient(135deg,#534ab7,#7f77dd);border-radius:10px;padding:12px;color:#fff;text-align:center}
+.manager .r{font-size:10px;opacity:.8}
+.manager .n{font-size:14px;font-weight:600}
+.members{flex:1;display:flex;gap:8px;flex-wrap:wrap}
+.member{flex:1;min-width:110px;background:#f7f5ff;border:1px solid #d5ccff;border-radius:10px;padding:10px;text-align:center}
+.member .n{font-size:12px;font-weight:600;color:#3c3489}
+.member .r{font-size:10px;color:#888;margin-top:2px}
 
-  .agent-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 10px;
-  }
-  .agent-card {
-    border-radius: 10px;
-    overflow: hidden;
-    border: 1px solid #e0e0e0;
-  }
-  .agent-card-header {
-    padding: 8px 10px;
-    font-size: 11px;
-    font-weight: 600;
-    color: #fff;
-    text-align: center;
-  }
-  .agent-card-body {
-    padding: 8px 10px;
-    background: #fff;
-  }
-  .agent-card-body ul {
-    list-style: none;
-    font-size: 10px;
-    color: #666;
-  }
-  .agent-card-body li {
-    padding: 2px 0;
-    padding-left: 12px;
-    position: relative;
-  }
-  .agent-card-body li::before {
-    content: "";
-    position: absolute;
-    left: 2px;
-    top: 8px;
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-  }
+/* 交互层 */
+.interact-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.interact-box{background:#f8f8f6;border:1px solid #e0e0d8;border-radius:10px;padding:14px}
+.interact-box .box-title{font-size:13px;font-weight:600;margin-bottom:8px;color:#444}
+.interact-box .box-items{font-size:12px;color:#666;line-height:1.8}
+.interact-box .box-items .hl{color:#4a3fb0;font-weight:600}
+.interact-box.upload{border-color:#c0e8d8;background:#f0faf6}
+.interact-box.upload .box-title{color:#085041}
 
-  .agent-review .agent-card-header { background: #378ADD; }
-  .agent-review .agent-card-body li::before { background: #378ADD; }
-  .agent-remind .agent-card-header { background: #BA7517; }
-  .agent-remind .agent-card-body li::before { background: #BA7517; }
-  .agent-todo .agent-card-header { background: #0F6E56; }
-  .agent-todo .agent-card-body li::before { background: #0F6E56; }
-  .agent-report .agent-card-header { background: #534AB7; }
-  .agent-report .agent-card-body li::before { background: #534AB7; }
-  .agent-insight .agent-card-header { background: #D4537E; }
-  .agent-insight .agent-card-body li::before { background: #D4537E; }
+/* Agent层 */
+.agent-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.agent{background:#fff;border:1px solid #e0e0e0;border-radius:8px;overflow:hidden}
+.agent .a-head{background:#378add;color:#fff;font-size:11px;font-weight:600;text-align:center;padding:6px}
+.agent .a-body{padding:6px 8px;font-size:10px;color:#666;line-height:1.5}
+.agent:nth-child(2) .a-head{background:#ba7517}
+.agent:nth-child(3) .a-head{background:#0f6e56}
+.agent:nth-child(4) .a-head{background:#534ab7}
+.agent:nth-child(5) .a-head{background:#d4537e}
 
-  .data-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-  }
-  .data-card {
-    background: #f8f8f6;
-    border: 1px solid #e0e0d8;
-    border-radius: 10px;
-    padding: 14px;
-    text-align: center;
-  }
-  .data-card .title { font-size: 13px; font-weight: 600; color: #444; }
-  .data-card .desc { font-size: 11px; color: #999; margin-top: 4px; }
+/* 数据层 */
+.data-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.data-card{background:#f8f8f6;border:1px solid #e0e0d8;border-radius:8px;padding:12px;text-align:center}
+.data-card .d-title{font-size:12px;font-weight:600;color:#444}
+.data-card .d-desc{font-size:10px;color:#999;margin-top:3px;line-height:1.5}
+.data-card.key{background:#f3f0ff;border-color:#d5ccff}
+.data-card.key .d-title{color:#4a3fb0}
 
-  .pipeline {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .pipeline-step {
-    flex: 1;
-    background: #f0faf6;
-    border: 1px solid #c0e8d8;
-    border-radius: 10px;
-    padding: 12px 10px;
-    text-align: center;
-  }
-  .pipeline-step .step-title { font-size: 13px; font-weight: 600; color: #085041; }
-  .pipeline-step .step-desc { font-size: 10px; color: #5a8a78; margin-top: 4px; }
-  .pipeline-arrow {
-    font-size: 16px;
-    color: #0F6E56;
-    flex: 0 0 auto;
-  }
-  .pipeline-step.review {
-    background: #fff8f2;
-    border-color: #f0d68a;
-  }
-  .pipeline-step.review .step-title { color: #BA7517; }
-  .pipeline-step.review .step-desc { color: #997520; }
-  .pipeline-step.final {
-    background: #534AB7;
-    border-color: #534AB7;
-  }
-  .pipeline-step.final .step-title { color: #fff; }
-  .pipeline-step.final .step-desc { color: #CECBF6; }
+/* 呈现层 */
+.present-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.present-box{border-radius:10px;padding:14px}
+.present-box.live{background:#f0faf6;border:1px solid #9fe1cb}
+.present-box.snapshot{background:#f8f8f6;border:1px solid #e0e0d8}
+.present-box .p-title{font-size:13px;font-weight:600;margin-bottom:6px}
+.present-box.live .p-title{color:#085041}
+.present-box.snapshot .p-title{color:#5f5e5a}
+.present-box .p-desc{font-size:11px;color:#666;line-height:1.6}
+.present-box .p-tag{display:inline-block;font-size:10px;padding:2px 8px;border-radius:8px;margin-top:6px}
+.present-box.live .p-tag{background:#9fe1cb;color:#085041}
+.present-box.snapshot .p-tag{background:#e0e0d8;color:#5f5e5a}
 
-  .meta-bar {
-    margin-top: 20px;
-    background: #fdf8ed;
-    border: 1px solid #f0d68a;
-    border-radius: 10px;
-    padding: 14px 20px;
-  }
-  .meta-bar .label {
-    font-size: 11px;
-    font-weight: 600;
-    color: #BA7517;
-    margin-right: 12px;
-  }
-  .meta-bar .rule {
-    font-size: 12px;
-    color: #6b4f10;
-    line-height: 1.8;
-  }
-  .meta-bar .rule span { color: #BA7517; font-weight: 500; }
+/* 箭头 */
+.flow-arrow{text-align:center;color:#bbb;font-size:16px;padding:1px 0;margin:-4px 0}
 
-  .flow-arrow {
-    text-align: center;
-    color: #ccc;
-    font-size: 16px;
-    padding: 2px 0;
-    margin: -4px 0;
-  }
+/* meta */
+.meta{margin-top:16px;background:#fdf8ed;border:1px solid #f0d68a;border-radius:10px;padding:14px 18px}
+.meta .rule{font-size:12px;color:#6b4f10;line-height:1.8}
+.meta .label{font-size:11px;font-weight:600;color:#ba7517;margin-right:10px}
+.meta span{color:#ba7517;font-weight:500}
 
-  @media (max-width: 750px) {
-    .agent-grid { grid-template-columns: repeat(3, 1fr); }
-    .data-grid, .pipeline { grid-template-columns: repeat(2, 1fr); flex-wrap: wrap; }
-    .user-grid { flex-direction: column; }
-    .manager-card { flex: auto; }
-    .pipeline-arrow { display: none; }
-    .pipeline { flex-direction: column; }
-  }
+@media(max-width:800px){.agent-grid{grid-template-columns:repeat(3,1fr)}.interact-grid,.present-grid{grid-template-columns:1fr}.user-grid{flex-direction:column}.manager{flex:auto}.data-grid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>工作汇报系统架构框架</h1>
-  <p class="subtitle">五层架构 · 五个独立 Agent · 企业微信集成</p>
+  <h1>WorkReport HR-Pro 系统架构</h1>
+  <p class="subtitle">一条数据管道：数据进来 → 存起来 → 处理 → 呈现</p>
 
-  <!-- Layer 1: 用户层 -->
-  <div class="layer layer-user">
-    <div class="layer-header">用户层</div>
+  <!-- 数据管道分阶段 -->
+  <div class="pipeline-banner">
+    <div class="pb-title">数据来源 · 分两阶段演进</div>
+    <div class="pipeline-steps">
+      <div class="pipe-step">
+        <span class="stage-tag">1.0 阶段</span>
+        人工录入周报 + 上传数据报表
+      </div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-step stage2">
+        <span class="stage-tag">2.0 阶段</span>
+        AI 自动取数（对接招聘系统）
+      </div>
+    </div>
+  </div>
+
+  <!-- Layer 1 用户层 -->
+  <div class="layer l-user">
+    <div class="layer-head">① 用户层</div>
     <div class="layer-body">
       <div class="user-grid">
-        <div class="manager-card">
-          <div class="role">管理者</div>
-          <div class="name">肖凌华</div>
-          <div style="font-size:10px;opacity:0.7;margin-top:4px;">集团招聘总监</div>
+        <div class="manager">
+          <div class="r">管理者</div>
+          <div class="n">肖凌华</div>
         </div>
-        <div class="member-cards">
-          <div class="member-card">
-            <div class="name">程宇欣</div>
-            <div class="role">COE + HRIS</div>
-          </div>
-          <div class="member-card">
-            <div class="name">李微微</div>
-            <div class="role">HRBP · 营销板块</div>
-          </div>
-          <div class="member-card">
-            <div class="name">高丽茹</div>
-            <div class="role">HRBP · 产研板块</div>
-          </div>
-          <div class="member-card">
-            <div class="name">李　雯</div>
-            <div class="role">HRBP · 运营板块</div>
-          </div>
+        <div class="members">
+          <div class="member"><div class="n">程宇欣</div><div class="r">COE + HRIS</div></div>
+          <div class="member"><div class="n">李微微</div><div class="r">HRBP · 营销</div></div>
+          <div class="member"><div class="n">高丽茹</div><div class="r">HRBP · 产研</div></div>
+          <div class="member"><div class="n">李　雯</div><div class="r">HRBP · 运营</div></div>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="flow-arrow">&#8595;</div>
+  <div class="flow-arrow">↓</div>
 
-  <!-- Layer 2: 交互层 -->
-  <div class="layer layer-interact">
-    <div class="layer-header">交互层</div>
+  <!-- Layer 2 交互层 -->
+  <div class="layer l-interact">
+    <div class="layer-head">② 交互层 · 周报填写</div>
     <div class="layer-body">
-      <div class="interact-row">
-        <div class="interact-item">
-          <div class="icon">&#x1F4BB;</div>
-          Web 应用（数据录入与管理）
+      <div class="interact-grid">
+        <div class="interact-box">
+          <div class="box-title">Web 应用 · 文字内容</div>
+          <div class="box-items">
+            本周做了什么<br>
+            下阶段计划<br>
+            所需支持 / 待决策事项
+          </div>
         </div>
-        <div class="interact-item">
-          <div class="icon">&#x1F916;</div>
-          企业微信 Bot（提醒与通知）
+        <div class="interact-box upload">
+          <div class="box-title">附件上传 · 员工自主决定</div>
+          <div class="box-items">
+            招聘进度明细表<br>
+            重点项目推进表 · 外包管理表<br>
+            <span class="hl">上传的明细数据持续积累 → 生成看板</span>
+          </div>
+        </div>
+        <div class="interact-box">
+          <div class="box-title">企业微信 Bot</div>
+          <div class="box-items">
+            周五定时提醒 · 催办<br>
+            群内 @ 未提交成员
+          </div>
+        </div>
+        <div class="interact-box">
+          <div class="box-title">腾讯会议纪要</div>
+          <div class="box-items">
+            周例会后上传<br>
+            作为待办提取的参考
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="flow-arrow">&#8595;</div>
+  <div class="flow-arrow">↓</div>
 
-  <!-- Layer 3: Agent 层 -->
-  <div class="layer layer-agent">
-    <div class="layer-header">Agent 层（独立运行的智能体）</div>
+  <!-- Layer 3 Agent层 -->
+  <div class="layer l-agent">
+    <div class="layer-head">③ Agent 层 · 五个智能体</div>
     <div class="layer-body">
       <div class="agent-grid">
-
-        <div class="agent-card agent-review">
-          <div class="agent-card-header">审阅 Agent</div>
-          <div class="agent-card-body">
-            <ul>
-              <li>结合历史判断进展</li>
-              <li>精简提炼内容</li>
-              <li>追问模糊描述</li>
-              <li><strong>对话式·不退回</strong></li>
-            </ul>
-          </div>
+        <div class="agent">
+          <div class="a-head">审阅 Agent</div>
+          <div class="a-body">判断进展<br>精简内容<br>追问补充</div>
         </div>
-
-        <div class="agent-card agent-remind">
-          <div class="agent-card-header">催办 Agent</div>
-          <div class="agent-card-body">
-            <ul>
-              <li>周五 16:00 全员提醒</li>
-              <li>18:00 / 21:00 催办</li>
-              <li>群内 @ 具体人</li>
-              <li><strong>持续至全员提交</strong></li>
-            </ul>
-          </div>
+        <div class="agent">
+          <div class="a-head">催办 Agent</div>
+          <div class="a-body">周五提醒<br>定时催办<br>群内@人</div>
         </div>
-
-        <div class="agent-card agent-todo">
-          <div class="agent-card-header">待办 Agent</div>
-          <div class="agent-card-body">
-            <ul>
-              <li>综合周报 + 批注</li>
-              <li>+ 腾讯会议纪要</li>
-              <li>提取下阶段待办</li>
-              <li><strong>周会后触发</strong></li>
-            </ul>
-          </div>
+        <div class="agent">
+          <div class="a-head">待办 Agent</div>
+          <div class="a-body">周报+批注<br>+会议纪要<br>提取待办</div>
         </div>
-
-        <div class="agent-card agent-report">
-          <div class="agent-card-header">报告 Agent</div>
-          <div class="agent-card-body">
-            <ul>
-              <li>时间维度聚合</li>
-              <li>目标维度聚合</li>
-              <li>月/季自动触发</li>
-              <li><strong>年度手动触发</strong></li>
-            </ul>
-          </div>
+        <div class="agent">
+          <div class="a-head">报告 Agent</div>
+          <div class="a-body">时间聚合<br>目标聚合<br>月季年报告</div>
         </div>
-
-        <div class="agent-card agent-insight">
-          <div class="agent-card-header">解读 Agent</div>
-          <div class="agent-card-body">
-            <ul>
-              <li>调用 HR 专家知识</li>
-              <li>专业视角洞察分析</li>
-              <li>输出解读报告</li>
-              <li><strong>报告后自动触发</strong></li>
-            </ul>
-          </div>
+        <div class="agent">
+          <div class="a-head">解读 Agent</div>
+          <div class="a-body">HR专家视角<br>专业洞察<br>解读报告</div>
         </div>
-
       </div>
     </div>
   </div>
 
-  <div class="flow-arrow">&#8595;</div>
+  <div class="flow-arrow">↓</div>
 
-  <!-- Layer 4: 核心数据层 -->
-  <div class="layer layer-data">
-    <div class="layer-header">核心数据层</div>
+  <!-- Layer 4 数据层 -->
+  <div class="layer l-data">
+    <div class="layer-head">④ 核心数据层</div>
     <div class="layer-body">
       <div class="data-grid">
         <div class="data-card">
-          <div class="title">年度目标</div>
-          <div class="desc">6 项目标 · 含权重</div>
+          <div class="d-title">年度目标</div>
+          <div class="d-desc">6项目标 · 含权重</div>
+        </div>
+        <div class="data-card key">
+          <div class="d-title">工作事项</div>
+          <div class="d-desc">分类 + 重要性标签<br>预计完成时间<br>附件（明细数据）</div>
         </div>
         <div class="data-card">
-          <div class="title">工作事项</div>
-          <div class="desc">三类分类 + 重要性标签</div>
+          <div class="d-title">周报数据</div>
+          <div class="d-desc">进展 · 下阶段计划<br>所需支持</div>
+        </div>
+        <div class="data-card key">
+          <div class="d-title">明细数据</div>
+          <div class="d-desc">上传的招聘明细等<br>持续积累</div>
         </div>
         <div class="data-card">
-          <div class="title">周报数据</div>
-          <div class="desc">每周提交 · 持续沉淀</div>
+          <div class="d-title">管理者批注</div>
+          <div class="d-desc">周会共识 · 逐条记录</div>
         </div>
         <div class="data-card">
-          <div class="title">管理者批注</div>
-          <div class="desc">周会共识 · 逐条记录</div>
+          <div class="d-title">待办与决策</div>
+          <div class="d-desc">下阶段待办<br>需领导决策事项</div>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="flow-arrow">&#8595;</div>
+  <div class="flow-arrow">↓</div>
 
-  <!-- Layer 5: 汇报模板 -->
-  <div class="layer layer-pipeline">
-    <div class="layer-header">汇报模板（看板 = 实时 · 报告 = 快照）</div>
+  <!-- Layer 5 呈现层 -->
+  <div class="layer l-present">
+    <div class="layer-head">⑤ 呈现层 · 汇报模板（同一套格式）</div>
     <div class="layer-body">
-      <!-- 管理者专属看板 -->
-      <div style="background:#E6F1FB;border:1px solid #85B7EB;border-radius:10px;padding:14px 18px;margin-bottom:14px;">
-        <div style="font-size:13px;font-weight:600;color:#185FA5;margin-bottom:6px;">&#x1F4CA; 管理者专属看板</div>
-        <div style="font-size:11px;color:#0C447C;line-height:1.7;">
-          实时刷新 · 随时回答领导提问 &nbsp;&nbsp;|&nbsp;&nbsp;
-          与季度/半年度/年度报告共用同一套格式模板 &nbsp;&nbsp;|&nbsp;&nbsp;
-          支持按目标、板块、分类筛选
+      <div class="present-grid">
+        <div class="present-box live">
+          <div class="p-title">管理者看板 · 实时</div>
+          <div class="p-desc">
+            关键数据 · 重点工作进度<br>
+            日常工作明细（可展开）<br>
+            待办与决策事项
+          </div>
+          <span class="p-tag">实时刷新 · 随时回答领导</span>
         </div>
-      </div>
-      <!-- 正式报告流水线 -->
-      <div class="pipeline">
-        <div class="pipeline-step">
-          <div class="step-title">报告 Agent</div>
-          <div class="step-desc">数据聚合 · 生成初版报告</div>
-        </div>
-        <div class="pipeline-arrow">&#10142;</div>
-        <div class="pipeline-step">
-          <div class="step-title">解读 Agent</div>
-          <div class="step-desc">HR 专家视角 · 洞察分析</div>
-        </div>
-        <div class="pipeline-arrow">&#10142;</div>
-        <div class="pipeline-step review">
-          <div class="step-title">团队综合审阅</div>
-          <div class="step-desc">修改优化 · 达成共识</div>
-        </div>
-        <div class="pipeline-arrow">&#10142;</div>
-        <div class="pipeline-step final">
-          <div class="step-title">正式版发布</div>
-          <div class="step-desc">HTML / PDF 输出</div>
+        <div class="present-box snapshot">
+          <div class="p-title">正式报告 · 快照</div>
+          <div class="p-desc">
+            月报 · 季报（自动）<br>
+            年报（手动）<br>
+            输出 HTML / PDF
+          </div>
+          <span class="p-tag">定时生成 · 定格快照</span>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Meta bar -->
-  <div class="meta-bar">
+  <!-- 权限规则 -->
+  <div class="meta">
     <div class="rule">
       <span class="label">权限规则</span>
-      工作记录 <span>全员可见</span> &nbsp;&nbsp;|&nbsp;&nbsp;
-      AI 审阅对话 <span>仅管理者可见</span> &nbsp;&nbsp;|&nbsp;&nbsp;
-      批注 <span>仅管理者与被批注人可见</span>
+      工作记录 <span>全员可见</span> ｜ AI审阅对话 <span>仅管理者可见</span> ｜ 批注 <span>仅管理者与被批注人可见</span>
     </div>
-    <div class="rule" style="margin-top:6px;">
-      <span class="label">展示规则</span>
-      按分类 + 重要性标签区分展示层级：<span>年度重点工作 / 高重要性突出展示</span> · 常规工作 / 低重要性简略呈现
+    <div class="rule">
+      <span class="label">进度判断</span>
+      根据「预计完成时间」自动判断每项工作 <span>正常 / 临近 / 延期</span>，看板直接标出
     </div>
-    <div class="rule" style="margin-top:6px;">
-      <span class="label">解读 Agent</span>
-      调用 HR 专家知识库（如 WorkBuddy 人力资源专家团），对聚合报告进行专业洞察与解读，输出后进入团队审阅环节
+    <div class="rule">
+      <span class="label">数据来源</span>
+      1.0 阶段人工录入 + 上传数据报表 ｜ 2.0 阶段 AI 自动取数（对接招聘系统）
     </div>
   </div>
 </div>
