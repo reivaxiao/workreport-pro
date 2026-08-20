@@ -1,5 +1,5 @@
 """数据库模型定义"""
-from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, ForeignKey, Float, Enum
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, ForeignKey, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
@@ -58,16 +58,21 @@ class WorkItem(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(200), nullable=False)            # 事项名称
     category = Column(String(20), nullable=False)         # 年度重点工作 / 自主专项工作 / 常规工作
+    importance = Column(String(10), default="中")          # 重要性标签：高 / 中 / 低
     owner_id = Column(Integer, ForeignKey("users.id"))    # 负责人
     goal_id = Column(Integer, ForeignKey("annual_goals.id"), nullable=True)  # 关联年度目标
     target_desc = Column(Text, default="")                # 工作目标/背景描述
-    status = Column(String(20), default="进行中")         # 进行中 / 已完成 / 已暂停
+    due_date = Column(String(20), default="")             # 预计完成时间 "2026-09-30"
+    is_cumulative = Column(Integer, default=0)             # 是否累计制 0=否 1=是
+    cum_metrics = Column(Text, default="[]")               # 累计指标定义(JSON) 如 [{"key":"offer","label":"Offer数","unit":"个"}]
+    status = Column(String(20), default="进行中")         # 进行中/已完成/暂停(手动)；临期/延期系统算
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
     owner = relationship("User", back_populates="work_items")
     goal = relationship("AnnualGoal", back_populates="work_items")
-    weekly_progress = relationship("WeeklyProgress", back_populates="work_item", order_by="WeeklyProgress.week_start.desc()")
+    weekly_progress = relationship("WeeklyProgress", back_populates="work_item")
+    attachments = relationship("Attachment", back_populates="work_item")
 
 
 # ========== 周报进展表 ==========
@@ -80,12 +85,27 @@ class WeeklyProgress(Base):
     progress = Column(Text, default="")                   # 本周进展描述
     next_plan = Column(Text, default="")                  # 下阶段计划
     blockers = Column(Text, default="")                   # 遇到的问题/需要支持
+    cum_data = Column(Text, default="{}")                 # 本周累计数据(JSON) 如 {"offer":3,"onboard":2}
     status_before_ai = Column(String(20), default="draft") # draft / ai_reviewed / submitted
     ai_suggestions = Column(Text, default="")              # AI审阅建议（JSON）
     submitted_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.now)
 
     work_item = relationship("WorkItem", back_populates="weekly_progress")
+
+
+# ========== 附件表 ==========
+class Attachment(Base):
+    __tablename__ = "attachments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    work_item_id = Column(Integer, ForeignKey("work_items.id"))
+    filename = Column(String(200), nullable=False)         # 文件名
+    week_start = Column(String(20), default="")            # 关联周（哪周上传的）
+    uploaded_by = Column(Integer, ForeignKey("users.id"))  # 上传人
+    uploaded_at = Column(DateTime, default=datetime.now)
+
+    work_item = relationship("WorkItem", back_populates="attachments")
 
 
 # ========== 管理者批注表 ==========
@@ -100,6 +120,30 @@ class Annotation(Base):
     created_at = Column(DateTime, default=datetime.now)
 
     manager = relationship("User", back_populates="annotations")
+
+
+# ========== 待办表 ==========
+class Todo(Base):
+    __tablename__ = "todos"
+
+    id = Column(Integer, primary_key=True, index=True)
+    content = Column(Text, nullable=False)                 # 待办内容
+    owner_id = Column(Integer, ForeignKey("users.id"))    # 责任人
+    due_date = Column(String(20), default="")             # 截止时间
+    status = Column(String(20), default="进行中")         # 进行中 / 已完成 / 已逾期
+    week_start = Column(String(20), default="")           # 来源周
+    created_at = Column(DateTime, default=datetime.now)
+
+
+# ========== 反馈规则库（Agent进化） ==========
+class FeedbackRule(Base):
+    __tablename__ = "feedback_rules"
+
+    id = Column(Integer, primary_key=True, index=True)
+    content = Column(Text, nullable=False)                 # 规则内容
+    source = Column(String(20), default="纠正")            # 纠正 / 认可
+    agent = Column(String(50), default="")                 # 关联的Agent
+    created_at = Column(DateTime, default=datetime.now)
 
 
 # ========== 周报提交状态表 ==========
@@ -122,22 +166,19 @@ def seed_data():
     """初始化种子数据：用户、目标、示例工作事项"""
     db = SessionLocal()
     try:
-        # 检查是否已有数据
         if db.query(User).count() > 0:
             return
 
-        # 创建用户
         users = [
-            User(name="肖凌华", role="管理者", is_manager=1, avatar_color="#534AB7"),
-            User(name="程宇欣", role="COE", business_line="", avatar_color="#378ADD"),
-            User(name="李微微", role="HRBP", business_line="营销板块", avatar_color="#0F6E56"),
-            User(name="高丽茹", role="HRBP", business_line="产研板块", avatar_color="#BA7517"),
-            User(name="李雯", role="HRBP", business_line="运营板块", avatar_color="#D4537E"),
+            User(name="肖凌华", role="管理者", is_manager=1, avatar_color="#7c3aed"),
+            User(name="程宇欣", role="COE", business_line="", avatar_color="#2563eb"),
+            User(name="李微微", role="HRBP", business_line="营销板块", avatar_color="#16a34a"),
+            User(name="高丽茹", role="HRBP", business_line="产研板块", avatar_color="#f97316"),
+            User(name="李雯", role="HRBP", business_line="运营板块", avatar_color="#eab308"),
         ]
         db.add_all(users)
         db.flush()
 
-        # 创建年度目标（6项）
         goals = [
             AnnualGoal(name="聚焦经营战略推动组织和人才规划布局", weight=20, category="业务",
                        kpis="招聘保障≥90%；人才布局形成全景图", year=2026),
@@ -155,31 +196,38 @@ def seed_data():
         db.add_all(goals)
         db.flush()
 
-        # 创建示例工作事项
+        # 示例工作事项（含累计制）
         sample_items = [
-            # 肖凌华 - 管理者
-            WorkItem(name="团队周报管理机制搭建", category="年度重点工作", owner_id=1, goal_id=6,
-                     target_desc="建立高效的工作汇报系统，实现自动化催办和AI辅助审阅"),
-            # 程宇欣 - COE
-            WorkItem(name="招聘数字化工具2.0版本建设", category="年度重点工作", owner_id=2, goal_id=5,
-                     target_desc="重构招聘底层架构，完成系统2.0上线"),
-            WorkItem(name="招聘制度修订", category="常规工作", owner_id=2,
-                     target_desc="完成2026年招聘制度的更新和发布"),
-            # 李微微 - HRBP营销
-            WorkItem(name="营销板块招聘交付", category="年度重点工作", owner_id=3, goal_id=1,
-                     target_desc="确保营销板块关键岗位需求达成率不低于90%"),
-            WorkItem(name="营销板块员工访谈", category="常规工作", owner_id=3,
-                     target_desc="定期进行员工访谈，关注人才动态"),
-            # 高丽茹 - HRBP产研
-            WorkItem(name="产研板块招聘交付", category="年度重点工作", owner_id=4, goal_id=1,
-                     target_desc="确保产研板块关键岗位需求达成率不低于90%"),
-            WorkItem(name="产研任职资格重构", category="自主专项工作", owner_id=4, goal_id=3,
-                     target_desc="实现产研侧人才标签化"),
-            # 李雯 - HRBP运营
-            WorkItem(name="运营板块招聘交付", category="年度重点工作", owner_id=5, goal_id=1,
-                     target_desc="确保运营板块关键岗位需求达成率不低于90%"),
-            WorkItem(name="运营板块岗职序列优化", category="年度重点工作", owner_id=5, goal_id=3,
-                     target_desc="优化运营板块的岗位职级序列，推动阶段性灵活用工"),
+            WorkItem(name="团队周报管理机制搭建", category="年度重点工作", importance="高",
+                     owner_id=1, goal_id=6, target_desc="建立高效的工作汇报系统，实现自动化催办和AI辅助审阅",
+                     due_date="2026-12-31"),
+            WorkItem(name="招聘数字化工具2.0版本建设", category="年度重点工作", importance="高",
+                     owner_id=2, goal_id=5, target_desc="重构招聘底层架构，完成系统2.0上线",
+                     due_date="2026-12-31"),
+            WorkItem(name="招聘制度修订", category="常规工作", importance="中",
+                     owner_id=2, target_desc="完成2026年招聘制度的更新和发布", due_date="2026-10-31"),
+            # 累计制：招聘（Offer数 + 入职数）
+            WorkItem(name="营销板块招聘交付", category="年度重点工作", importance="高",
+                     owner_id=3, goal_id=1, target_desc="确保营销板块关键岗位需求达成率不低于90%",
+                     due_date="2026-09-30", is_cumulative=1,
+                     cum_metrics='[{"key":"offer","label":"Offer数","unit":"个"},{"key":"onboard","label":"入职数","unit":"人"}]'),
+            # 累计制：访谈（人次）
+            WorkItem(name="营销板块员工访谈", category="常规工作", importance="中",
+                     owner_id=3, target_desc="定期进行员工访谈，关注人才动态",
+                     is_cumulative=1, cum_metrics='[{"key":"count","label":"访谈人次","unit":"人次"}]'),
+            WorkItem(name="产研板块招聘交付", category="年度重点工作", importance="高",
+                     owner_id=4, goal_id=1, target_desc="确保产研板块关键岗位需求达成率不低于90%",
+                     due_date="2026-09-30", is_cumulative=1,
+                     cum_metrics='[{"key":"offer","label":"Offer数","unit":"个"},{"key":"onboard","label":"入职数","unit":"人"}]'),
+            WorkItem(name="产研任职资格重构", category="自主专项工作", importance="中",
+                     owner_id=4, goal_id=3, target_desc="实现产研侧人才标签化", due_date="2026-10-15"),
+            WorkItem(name="运营板块招聘交付", category="年度重点工作", importance="高",
+                     owner_id=5, goal_id=1, target_desc="确保运营板块关键岗位需求达成率不低于90%",
+                     due_date="2026-09-30", is_cumulative=1,
+                     cum_metrics='[{"key":"offer","label":"Offer数","unit":"个"},{"key":"onboard","label":"入职数","unit":"人"}]'),
+            WorkItem(name="运营板块岗职序列优化", category="年度重点工作", importance="高",
+                     owner_id=5, goal_id=3, target_desc="优化运营板块的岗位职级序列，推动阶段性灵活用工",
+                     due_date="2026-10-31"),
         ]
         db.add_all(sample_items)
 
