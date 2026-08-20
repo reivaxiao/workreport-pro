@@ -92,7 +92,7 @@ textarea{min-height:80px}
 
 .empty-state{text-align:center;padding:40px;color:#999;font-size:14px}
 
-/* 管理者看板 */
+/* 管理者汇报视图 */
 .stats-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:16px}
 .stat-card{background:#f8f9fa;border-radius:10px;padding:14px;text-align:center}
 .stat-card .stat-num{font-size:24px;font-weight:700}
@@ -440,7 +440,7 @@ async function addItem() {
   loadMyItems();
 }
 
-// ========== 管理者看板 ==========
+// ========== 管理者汇报视图 ==========
 async function loadStatus() {
   if (!currentUser || !currentUser.is_manager) return;
   const res = await fetch(`/api/agent/submit-status?week_start=${currentWeekStart}`);
