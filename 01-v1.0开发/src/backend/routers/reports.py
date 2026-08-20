@@ -123,11 +123,15 @@ def my_progress(user_id: int, week_start: Optional[str] = None, db: Session = De
             "due_date": item.due_date,
             "is_cumulative": item.is_cumulative,
             "cum_metrics": json.loads(item.cum_metrics) if item.cum_metrics else [],
+            "target_desc": item.target_desc,
+            "goal_id": item.goal_id,
+            "goal_name": item.goal.name if item.goal else "",
             "progress": progress.progress if progress else "",
             "next_plan": progress.next_plan if progress else "",
             "blockers": progress.blockers if progress else "",
             "cum_data": json.loads(progress.cum_data) if progress and progress.cum_data else {},
             "cum_value": cum_value,
+            "last_week_progress": last_progress.progress if last_progress else "",
             "last_week_next_plan": last_progress.next_plan if last_progress else "",
         })
     return result

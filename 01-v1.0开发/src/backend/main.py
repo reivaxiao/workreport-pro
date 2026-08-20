@@ -18,13 +18,15 @@ app.add_middleware(
 )
 
 # 注册路由
-from routers import users, goals, items, reports, annotations, agents
+from routers import users, goals, items, reports, annotations, agents, attachments, auth
 app.include_router(users.router, prefix="/api", tags=["用户"])
 app.include_router(goals.router, prefix="/api", tags=["年度目标"])
 app.include_router(items.router, prefix="/api", tags=["工作事项"])
 app.include_router(reports.router, prefix="/api", tags=["周报"])
 app.include_router(annotations.router, prefix="/api", tags=["批注"])
 app.include_router(agents.router, prefix="/api", tags=["AI智能体"])
+app.include_router(attachments.router, prefix="/api", tags=["附件"])
+app.include_router(auth.router, prefix="/api", tags=["登录"])
 
 # 静态文件（前端页面）
 frontend_dir = Path(__file__).parent.parent / "frontend"
