@@ -1,0 +1,11 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# 数据库文件（本地数据，不入库）
+*.db
+
+# IDE
+.vscode/
+.idea/
