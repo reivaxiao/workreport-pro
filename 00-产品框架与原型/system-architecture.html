@@ -50,14 +50,15 @@ h1{font-size:22px;font-weight:600;text-align:center;margin-bottom:4px;color:#1a1
 .interact-box.upload .box-title{color:#085041}
 
 /* Agent层 */
-.agent-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.agent-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .agent{background:#fff;border:1px solid #e0e0e0;border-radius:8px;overflow:hidden}
 .agent .a-head{background:#378add;color:#fff;font-size:11px;font-weight:600;text-align:center;padding:6px}
 .agent .a-body{padding:6px 8px;font-size:10px;color:#666;line-height:1.5}
 .agent:nth-child(2) .a-head{background:#ba7517}
 .agent:nth-child(3) .a-head{background:#0f6e56}
-.agent:nth-child(4) .a-head{background:#534ab7}
-.agent:nth-child(5) .a-head{background:#d4537e}
+.agent:nth-child(4) .a-head{background:#0d9488}
+.agent:nth-child(5) .a-head{background:#534ab7}
+.agent:nth-child(6) .a-head{background:#d4537e}
 
 /* 数据层 */
 .data-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
@@ -89,7 +90,7 @@ h1{font-size:22px;font-weight:600;text-align:center;margin-bottom:4px;color:#1a1
 .meta .label{font-size:11px;font-weight:600;color:#ba7517;margin-right:10px}
 .meta span{color:#ba7517;font-weight:500}
 
-@media(max-width:800px){.agent-grid{grid-template-columns:repeat(3,1fr)}.interact-grid,.present-grid{grid-template-columns:1fr}.user-grid{flex-direction:column}.manager{flex:auto}.data-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:800px){.agent-grid{grid-template-columns:repeat(2,1fr)}.interact-grid,.present-grid{grid-template-columns:1fr}.user-grid{flex-direction:column}.manager{flex:auto}.data-grid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
@@ -177,7 +178,7 @@ h1{font-size:22px;font-weight:600;text-align:center;margin-bottom:4px;color:#1a1
 
   <!-- Layer 3 Agent层 -->
   <div class="layer l-agent">
-    <div class="layer-head">③ Agent 层 · 五个智能体</div>
+    <div class="layer-head">③ Agent 层 · 六个智能体</div>
     <div class="layer-body">
       <div class="agent-grid">
         <div class="agent">
@@ -191,6 +192,10 @@ h1{font-size:22px;font-weight:600;text-align:center;margin-bottom:4px;color:#1a1
         <div class="agent">
           <div class="a-head">待办 Agent</div>
           <div class="a-body">周报+批注<br>+会议纪要<br>提取待办</div>
+        </div>
+        <div class="agent">
+          <div class="a-head">信息提炼 Agent</div>
+          <div class="a-body">识别工作性质<br>累计制自动累计<br>提炼结构化数据</div>
         </div>
         <div class="agent">
           <div class="a-head">报告 Agent</div>
