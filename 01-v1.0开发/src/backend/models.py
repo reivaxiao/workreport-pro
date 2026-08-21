@@ -180,7 +180,7 @@ def seed_data():
 
         users = [
             User(name="肖凌华", username="xlinghua", password_hash=hash_password("123456"), role="管理者", is_manager=1, avatar_color="#7c3aed"),
-            User(name="程宇欣", username="cyuxin", password_hash=hash_password("123456"), role="COE", business_line="", avatar_color="#2563eb"),
+            User(name="程宇欣", username="cyuxin", password_hash=hash_password("123456"), role="COE", business_line="", is_manager=1, avatar_color="#2563eb"),
             User(name="李微微", username="lweiwei", password_hash=hash_password("123456"), role="HRBP", business_line="营销板块", avatar_color="#16a34a"),
             User(name="高丽茹", username="gliru", password_hash=hash_password("123456"), role="HRBP", business_line="产研板块", avatar_color="#f97316"),
             User(name="李雯", username="lwen", password_hash=hash_password("123456"), role="HRBP", business_line="运营板块", avatar_color="#eab308"),
