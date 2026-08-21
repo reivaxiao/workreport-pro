@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WorkReport HR-Pro · 新旧架构对比</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#f5f6f8;color:#333;line-height:1.6;padding:28px 20px 60px}
+.container{max-width:1080px;margin:0 auto}
+h1{font-size:22px;font-weight:700;text-align:center;margin-bottom:4px;color:#1a1a1a}
+.subtitle{text-align:center;font-size:13px;color:#888;margin-bottom:26px}
+
+/* 顶部定位变化横幅 */
+.position-banner{background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:16px 20px;margin-bottom:20px}
+.position-banner .pb-title{font-size:13px;font-weight:600;color:#4a3fb0;margin-bottom:10px}
+.position-steps{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pos-step{background:#f3f0ff;border:1px solid #d5ccff;border-radius:8px;padding:8px 14px;font-size:12px;color:#3c3489;text-align:center}
+.pos-step.old{background:#f1f1f1;border-color:#ddd;color:#777;text-decoration:line-through}
+.pos-step.new{background:#f0faf6;border-color:#9fe1cb;color:#085041;font-weight:600}
+.pos-arrow{color:#999;font-size:14px}
+
+/* 对比列标题 */
+.col-heads{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px}
+.col-head{text-align:center;padding:10px;border-radius:10px;font-size:15px;font-weight:700}
+.col-head.old{background:#e8e8e8;color:#777}
+.col-head.new{background:linear-gradient(135deg,#534ab7,#7f77dd);color:#fff}
+
+/* 层级对比行 */
+.layer-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:14px;align-items:stretch}
+.layer-block{border-radius:12px;overflow:hidden;border:1px solid #e0e0e0;background:#fff}
+.layer-block.old{border-color:#e0e0e0}
+.layer-block.new{border-color:#c9bfff}
+.layer-title{padding:9px 16px;font-size:13px;font-weight:700;color:#fff}
+.layer-block.old .layer-title{background:#9a9a9a}
+.layer-block.new .layer-title{background:#534ab7}
+.layer-body{padding:14px 16px}
+
+/* 内容项 */
+.items{display:flex;flex-wrap:wrap;gap:8px}
+.item{font-size:12px;border-radius:8px;padding:6px 12px;background:#f7f7f7;border:1px solid #eee;color:#666}
+.layer-block.old .item{background:#f7f7f7;border-color:#eee;color:#777}
+.layer-block.new .item{background:#f7f5ff;border-color:#e2dcff;color:#3c3489}
+.item.added{background:#e6f7ee;border-color:#b8e6cc;color:#0b7a3b;font-weight:600}
+.item.changed{background:#fff4e5;border-color:#f5d6a8;color:#b45309;font-weight:600}
+.item .mark{display:inline-block;font-size:10px;margin-right:4px}
+
+/* 图例 */
+.legend{display:flex;gap:18px;justify-content:center;margin:8px 0 24px;flex-wrap:wrap}
+.legend span{font-size:12px;color:#555;display:flex;align-items:center;gap:6px}
+.legend .sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+.sw-added{background:#e6f7ee;border:1px solid #b8e6cc}
+.sw-changed{background:#fff4e5;border:1px solid #f5d6a8}
+.sw-new{background:#f7f5ff;border:1px solid #e2dcff}
+.sw-old{background:#f7f7f7;border:1px solid #eee}
+
+/* 总结表 */
+.summary-title{font-size:15px;font-weight:700;margin:26px 0 12px;color:#1a1a1a}
+.summary-table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.summary-table th{background:#f3f0ff;color:#4a3fb0;font-size:12px;font-weight:700;padding:11px 14px;text-align:left}
+.summary-table td{font-size:13px;padding:11px 14px;border-top:1px solid #f0f0f0;vertical-align:top}
+.summary-table tr:nth-child(even) td{background:#fafafa}
+.summary-table td.dim{color:#888;font-weight:600;white-space:nowrap;width:130px}
+.summary-table .new-val{color:#0b7a3b;font-weight:600}
+.summary-table .old-val{color:#999}
+
+@media(max-width:760px){.col-heads,.layer-row{grid-template-columns:1fr}.summary-table td.dim{width:auto}}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>WorkReport HR-Pro · 新旧架构对比</h1>
+  <p class="subtitle">从「工作汇报记录工具」到「智能工作汇报系统」的演进</p>
+
+  <!-- 定位变化 -->
+  <div class="position-banner">
+    <div class="pb-title">产品定位 · 关键变化</div>
+    <div class="position-steps">
+      <div class="pos-step old">人力资源看板（定位模糊）</div>
+      <span class="pos-arrow">→</span>
+      <div class="pos-step new">工作汇报工具 · 大中台组成模块</div>
+    </div>
+  </div>
+
+  <!-- 图例 -->
+  <div class="legend">
+    <span><span class="sw sw-added"></span>新增内容</span>
+    <span><span class="sw sw-changed"></span>发生变化</span>
+    <span><span class="sw sw-old"></span>旧版原有</span>
+    <span><span class="sw sw-new"></span>新版保留</span>
+  </div>
+
+  <!-- 列标题 -->
+  <div class="col-heads">
+    <div class="col-head old">旧版架构</div>
+    <div class="col-head new">新版架构</div>
+  </div>
+
+  <!-- 用户层 -->
+  <div class="layer-row">
+    <div class="layer-block old">
+      <div class="layer-title">① 用户层</div>
+      <div class="layer-body">
+        <div class="items">
+          <span class="item">管理者 · 肖凌华</span>
+          <span class="item">4 位团队成员</span>
+        </div>
+      </div>
+    </div>
+    <div class="layer-block new">
+      <div class="layer-title">① 用户层</div>
+      <div class="layer-body">
+        <div class="items">
+          <span class="item">管理者 · 肖凌华</span>
+          <span class="item">4 位团队成员</span>
+          <span class="item added"><span class="mark">＋</span>账号密码登录</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 交互层 -->
+  <div class="layer-row">
+    <div class="layer-block old">
+      <div class="layer-title">② 交互层</div>
+      <div class="layer-body">
+        <div class="items">
+          <span class="item">Web 文字填写</span>
+          <span class="item">企业微信 Bot</span>
+          <span class="item">腾讯会议纪要</span>
+        </div>
+      </div>
+    </div>
+    <div class="layer-block new">
+      <div class="layer-title">② 交互层</div>
+      <div class="layer-body">
+        <div class="items">
+          <span class="item added"><span class="mark">＋</span>登录认证入口</span>
+          <span class="item">Web 文字填写</span>
+          <span class="item added"><span class="mark">＋</span>附件上传（员工自主）</span>
+          <span class="item">企业微信 Bot</span>
+          <span class="item">腾讯会议纪要</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Agent层 -->
+  <div class="layer-row">
+    <div class="layer-block old">
+      <div class="layer-title">③ Agent 层 · 五个智能体</div>
+      <div class="layer-body">
+        <div class="items">
+          <span class="item">审阅 Agent</span>
+          <span class="item">催办 Agent</span>
+          <span class="item">待办 Agent</span>
+          <span class="item">报告 Agent</span>
+          <span class="item">解读 Agent</span>
+        </div>
+      </div>
+    </div>
+    <div class="layer-block new">
+      <div class="layer-title">③ Agent 层 · 六个智能体</div>
+      <div class="layer-body">
+        <div class="items">
+          <span class="item">审阅 Agent</span>
+          <span class="item">催办 Agent</span>
+          <span class="item">待办 Agent</span>
+          <span class="item added"><span class="mark">＋</span>信息提炼 Agent（智能累计）</span>
+          <span class="item">报告 Agent</span>
+          <span class="item">解读 Agent</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 数据层 -->
+  <div class="layer-row">
+    <div class="layer-block old">
+      <div class="layer-title">④ 核心数据层</div>
+      <div class="layer-body">
+        <div class="items">
+          <span class="item">年度目标</span>
+          <span class="item">工作事项</span>
+          <span class="item">周报数据</span>
+          <span class="item">管理者批注</span>
+          <span class="item">待办与决策</span>
+        </div>
+      </div>
+    </div>
+    <div class="layer-block new">
+      <div class="layer-title">④ 核心数据层</div>
+      <div class="layer-body">
+        <div class="items">
+          <span class="item added"><span class="mark">＋</span>用户账号</span>
+          <span class="item">年度目标</span>
+          <span class="item changed"><span class="mark">改</span>工作事项（＋预计完成时间/附件）</span>
+          <span class="item">周报数据</span>
+          <span class="item added"><span class="mark">＋</span>明细数据（持续积累）</span>
+          <span class="item">管理者批注</span>
+          <span class="item">待办与决策</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 呈现层 -->
+  <div class="layer-row">
+    <div class="layer-block old">
+      <div class="layer-title">⑤ 呈现层</div>
+      <div class="layer-body">
+        <div class="items">
+          <span class="item changed"><span class="mark">改</span>管理者专属「看板」</span>
+          <span class="item">正式报告（快照）</span>
+        </div>
+      </div>
+    </div>
+    <div class="layer-block new">
+      <div class="layer-title">⑤ 呈现层</div>
+      <div class="layer-body">
+        <div class="items">
+          <span class="item changed"><span class="mark">改</span>管理者「汇报视图」（实时）</span>
+          <span class="item">正式报告（快照）</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 总结 -->
+  <div class="summary-title">核心变化一览</div>
+  <table class="summary-table">
+    <thead>
+      <tr><th>维度</th><th>旧版</th><th>新版</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="dim">产品定位</td>
+        <td class="old-val">定位模糊，曾被称"人力看板"</td>
+        <td class="new-val">工作汇报工具，大中台组成模块</td>
+      </tr>
+      <tr>
+        <td class="dim">登录</td>
+        <td class="old-val">无（选身份模拟）</td>
+        <td class="new-val">账号密码登录，登录后仅见本人周报</td>
+      </tr>
+      <tr>
+        <td class="dim">附件</td>
+        <td class="old-val">无</td>
+        <td class="new-val">每事项可上传附件，明细数据持续积累</td>
+      </tr>
+      <tr>
+        <td class="dim">智能体</td>
+        <td class="old-val">5 个</td>
+        <td class="new-val">6 个（新增信息提炼 Agent）</td>
+      </tr>
+      <tr>
+        <td class="dim">核心能力</td>
+        <td class="old-val">记录 + 聚合</td>
+        <td class="new-val">智能累计（本周 X + 全年累计 XX）</td>
+      </tr>
+      <tr>
+        <td class="dim">进度判断</td>
+        <td class="old-val">无</td>
+        <td class="new-val">按预计完成时间自动标正常/临期/延期</td>
+      </tr>
+      <tr>
+        <td class="dim">汇报呈现</td>
+        <td class="old-val">"看板"（与大中台看板工具重名）</td>
+        <td class="new-val">"汇报视图"（实时刷新，与看板工具区分）</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+</body>
+</html>

@@ -40,6 +40,12 @@ h1{font-size:22px;font-weight:600;text-align:center;margin-bottom:4px;color:#1a1
 .member .n{font-size:12px;font-weight:600;color:#3c3489}
 .member .r{font-size:10px;color:#888;margin-top:2px}
 
+/* 登录认证 */
+.login-tag{display:inline-block;font-size:10px;background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;border-radius:6px;padding:2px 8px;margin-left:10px;font-weight:600}
+.auth-box{background:#eef2ff;border:1px solid #c7d2fe;border-radius:10px;padding:14px}
+.auth-box .box-title{color:#4338ca}
+.auth-box .box-items .hl{color:#4338ca;font-weight:600}
+
 /* 交互层 */
 .interact-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .interact-box{background:#f8f8f6;border:1px solid #e0e0d8;border-radius:10px;padding:14px}
@@ -67,6 +73,8 @@ h1{font-size:22px;font-weight:600;text-align:center;margin-bottom:4px;color:#1a1
 .data-card .d-desc{font-size:10px;color:#999;margin-top:3px;line-height:1.5}
 .data-card.key{background:#f3f0ff;border-color:#d5ccff}
 .data-card.key .d-title{color:#4a3fb0}
+.data-card.auth{background:#eef2ff;border-color:#c7d2fe}
+.data-card.auth .d-title{color:#4338ca}
 
 /* 呈现层 */
 .present-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -116,7 +124,7 @@ h1{font-size:22px;font-weight:600;text-align:center;margin-bottom:4px;color:#1a1
 
   <!-- Layer 1 用户层 -->
   <div class="layer l-user">
-    <div class="layer-head">① 用户层</div>
+    <div class="layer-head">① 用户层 <span class="login-tag">账号密码登录</span></div>
     <div class="layer-body">
       <div class="user-grid">
         <div class="manager">
@@ -140,6 +148,14 @@ h1{font-size:22px;font-weight:600;text-align:center;margin-bottom:4px;color:#1a1
     <div class="layer-head">② 交互层 · 周报填写</div>
     <div class="layer-body">
       <div class="interact-grid">
+        <div class="interact-box auth-box">
+          <div class="box-title">登录认证 · 入口</div>
+          <div class="box-items">
+            <span class="hl">账号密码登录</span><br>
+            登录后仅见本人周报<br>
+            管理者另见全员汇报视图
+          </div>
+        </div>
         <div class="interact-box">
           <div class="box-title">Web 应用 · 文字内容</div>
           <div class="box-items">
@@ -216,6 +232,10 @@ h1{font-size:22px;font-weight:600;text-align:center;margin-bottom:4px;color:#1a1
     <div class="layer-head">④ 核心数据层</div>
     <div class="layer-body">
       <div class="data-grid">
+        <div class="data-card auth">
+          <div class="d-title">用户账号</div>
+          <div class="d-desc">账号 · 密码<br>角色与权限</div>
+        </div>
         <div class="data-card">
           <div class="d-title">年度目标</div>
           <div class="d-desc">6项目标 · 含权重</div>
@@ -275,6 +295,10 @@ h1{font-size:22px;font-weight:600;text-align:center;margin-bottom:4px;color:#1a1
 
   <!-- 权限规则 -->
   <div class="meta">
+    <div class="rule">
+      <span class="label">登录权限</span>
+      账号密码登录后 <span>仅本人可填/看自己的周报</span> ｜ 管理者登录 <span>另见全员汇报视图</span>
+    </div>
     <div class="rule">
       <span class="label">权限规则</span>
       工作记录 <span>全员可见</span> ｜ AI审阅对话 <span>仅管理者可见</span> ｜ 批注 <span>仅管理者与被批注人可见</span>
