@@ -3,19 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WorkReport HR-Pro · 管理者工作汇报视图</title>
+<title>WorkReport HR-Pro · 业务管理者汇报视图</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#f4f5f7;color:#333;line-height:1.6}
 
-.topbar{background:linear-gradient(135deg,#5b21b6,#7c3aed,#a855f7);color:#fff;padding:16px 28px;display:flex;align-items:center;justify-content:space-between}
+.topbar{background:linear-gradient(135deg,#5b21b6,#7c3aed,#a855f7);color:#fff;padding:14px 28px}
+.topbar .row1{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .topbar .left{display:flex;align-items:center;gap:14px}
 .topbar .logo{font-size:18px;font-weight:700}
 .live-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);border-radius:16px;padding:4px 12px;font-size:11px}
 .live-dot{width:7px;height:7px;border-radius:50%;background:#4ade80;animation:blink 1.5s infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-.topbar .right{font-size:13px;opacity:.95}
+.topbar .right{font-size:13px;opacity:.95;display:flex;align-items:center;gap:10px}
+.role-chip{background:rgba(255,255,255,.2);border-radius:8px;padding:2px 10px;font-size:11px;font-weight:600}
+
+/* 场景切换 */
+.scene-tabs{display:flex;gap:8px}
+.scene-tab{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:18px;padding:5px 16px;font-size:12px;cursor:pointer;transition:.2s;white-space:nowrap}
+.scene-tab:hover{background:rgba(255,255,255,.25)}
+.scene-tab.active{background:#fff;color:#7c3aed;font-weight:700;border-color:#fff}
 
 .container{max-width:1160px;margin:0 auto;padding:20px}
 
@@ -107,31 +115,51 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Micr
 /* 待办与决策 */
 .todo-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .todo-card{background:#fff;border-radius:14px;padding:18px 22px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
-.t-title{font-size:14px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
-.todo-item{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid #f6f6f6;font-size:13px}
+.t-title{font-size:14px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.t-sub{font-size:11px;color:#999;margin-bottom:12px}
+.todo-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #f6f6f6;font-size:13px}
 .todo-item:last-child{border-bottom:none}
 .dot{width:7px;height:7px;border-radius:50%;margin-top:7px;flex-shrink:0}
 .dot.action{background:#7c3aed}
 .dot.decide{background:#ef4444}
+.dot.overdue{background:#f97316}
+.dot.done{background:#16a34a}
 .t-content{flex:1;color:#555}
-.t-owner{font-size:11px;color:#888;white-space:nowrap}
+.t-meta{display:flex;flex-direction:column;align-items:flex-end;gap:3px;white-space:nowrap}
+.t-owner{font-size:11px;color:#888}
+.t-due{font-size:10px;color:#aaa}
 
-@media(max-width:800px){.metrics{grid-template-columns:repeat(2,1fr)}.todo-grid{grid-template-columns:1fr}}
+/* 待办状态标签 */
+.td-st{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;padding:1px 7px;border-radius:8px}
+
+.hidden{display:none}
+
+@media(max-width:800px){.metrics{grid-template-columns:repeat(2,1fr)}.todo-grid{grid-template-columns:1fr}.scene-tabs{flex-wrap:wrap}}
 </style>
 </head>
 <body>
 <div class="topbar">
-  <div class="left">
-    <span class="logo">WorkReport HR-Pro</span>
-    <span class="live-badge"><span class="live-dot"></span>实时更新</span>
+  <div class="row1">
+    <div class="left">
+      <span class="logo">WorkReport HR-Pro</span>
+      <span class="live-badge"><span class="live-dot"></span>实时更新</span>
+    </div>
+    <div class="right">
+      <span>2026年8月17日—21日（第34周）</span>
+      <span class="role-chip">业务管理者 · 肖凌华</span>
+    </div>
   </div>
-  <div class="right">管理者工作汇报视图 · 2026年8月10日—14日（第33周）</div>
+  <div class="scene-tabs">
+    <div class="scene-tab active" onclick="switchScene('boss')">大老板汇报</div>
+    <div class="scene-tab" onclick="switchScene('cadre')">干部例会</div>
+    <div class="scene-tab" onclick="switchScene('team')">团队例会</div>
+  </div>
 </div>
 
 <div class="container">
 
   <!-- AI 一句话总结 -->
-  <div class="ai-summary">
+  <div class="ai-summary" id="secSummary">
     <span class="ai-tag">AI 总结</span>
     <div class="summary-text">
       本周招聘推进顺利，关键岗位达成率 <b>72%</b>（↑5%），到岗 <b>12人</b>。累计完成重点事项 <b>1项</b>；<b>运营招聘临近交付节点</b>、<b>外包生态整合已延期</b>，建议重点关注。
@@ -149,7 +177,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Micr
   </div>
 
   <!-- ① 关键数据 -->
-  <div class="section">
+  <div class="section" id="secMetrics">
     <div class="section-head"><span class="bar"></span><span class="title">关键数据</span></div>
     <div class="metrics">
       <div class="metric">
@@ -177,7 +205,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Micr
   </div>
 
   <!-- ② 重点工作项目进度 -->
-  <div class="section">
+  <div class="section" id="secKey">
     <div class="section-head"><span class="bar"></span><span class="title">重点工作项目进度</span><span class="hint">含累计成果 · 进度状态 · 明细附件</span></div>
     <div class="key-card">
 
@@ -302,25 +330,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Micr
     </div>
   </div>
 
-  <!-- ③ 日常工作明细（默认收起，按人分组） -->
-  <div class="section">
-    <div class="section-head"><span class="bar"></span><span class="title">日常工作周报内容</span><span class="hint">按人（板块）分组 · 团队例会时展开</span></div>
+  <!-- ③ 日常工作明细（团队例会场景展开） -->
+  <div class="section" id="secDaily">
+    <div class="section-head"><span class="bar"></span><span class="title">日常工作周报内容</span><span class="hint">按人（板块）分组</span></div>
     <div class="daily-card">
       <div class="daily-head" onclick="toggleDaily()">
-        <div class="left"><span class="title">全员日常工作明细</span><span class="sub">5人 · 按人分组</span></div>
+        <div class="left"><span class="title">全员日常工作明细</span><span class="sub">4人 · 按人分组</span></div>
         <span class="daily-arrow" id="dailyArrow">▼ 展开</span>
       </div>
       <div class="daily-body hidden" id="dailyBody">
         <div class="member-group">
-          <div class="m-head"><span class="m-avatar" style="background:#7c3aed">肖</span>肖凌华 · 管理者</div>
-          <div class="work-row">
-            <span class="w-name">团队汇报机制搭建</span>
-            <span class="w-desc">汇报系统上线试运行</span>
-            <div class="w-meta"><span class="st-badge bg-doing c-doing">● 进行中</span></div>
-          </div>
-        </div>
-        <div class="member-group">
-          <div class="m-head"><span class="m-avatar" style="background:#2563eb">程</span>程宇欣 · COE</div>
+          <div class="m-head"><span class="m-avatar" style="background:#2563eb">程</span>程宇欣 · COE + HRIS</div>
           <div class="work-row">
             <span class="w-name">招聘数字化2.0</span>
             <span class="w-desc">架构设计完成，进入开发</span>
@@ -341,7 +361,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Micr
           </div>
           <div class="work-row">
             <span class="w-name">营销员工访谈</span>
-            <span class="w-desc">完成第33周访谈，本周 2 人（附员工名单），<b style="color:#7c3aed">2026年累计访谈 26 人</b></span>
+            <span class="w-desc">完成第34周访谈，本周 2 人（附员工名单），<b style="color:#7c3aed">2026年累计访谈 28 人</b></span>
             <div class="w-meta"><span class="st-badge bg-doing c-doing">● 进行中</span></div>
           </div>
         </div>
@@ -376,18 +396,36 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Micr
   </div>
 
   <!-- ④ 待办与决策 -->
-  <div class="section">
-    <div class="section-head"><span class="bar"></span><span class="title">待办事宜与决策事项</span></div>
+  <div class="section" id="secTodo">
+    <div class="section-head"><span class="bar"></span><span class="title">待办事宜与决策事项</span><span class="hint">来源：周报 + 批注 + 会议纪要</span></div>
     <div class="todo-grid">
       <div class="todo-card">
         <div class="t-title">📋 下阶段待办</div>
-        <div class="todo-item"><span class="dot action"></span><span class="t-content">营销板块：推进2个急缺算法岗招聘</span><span class="t-owner">李微微</span></div>
-        <div class="todo-item"><span class="dot action"></span><span class="t-content">产研板块：启动 SaaS 产品岗招聘</span><span class="t-owner">高丽茹</span></div>
-        <div class="todo-item"><span class="dot action"></span><span class="t-content">运营板块：完成运营储备干部招募</span><span class="t-owner">李雯</span></div>
-        <div class="todo-item"><span class="dot action"></span><span class="t-content">任职资格标准进入部门评审</span><span class="t-owner">高丽茹</span></div>
+        <div class="t-sub">未完成自动顺延 · 责任人确认后标记完成</div>
+        <div class="todo-item">
+          <span class="dot action"></span>
+          <span class="t-content">营销板块：推进2个急缺算法岗招聘</span>
+          <span class="t-meta"><span class="t-owner">李微微</span><span class="td-st bg-doing c-doing">进行中</span><span class="t-due">8月24日截止</span></span>
+        </div>
+        <div class="todo-item">
+          <span class="dot action"></span>
+          <span class="t-content">产研板块：启动 SaaS 产品岗招聘</span>
+          <span class="t-meta"><span class="t-owner">高丽茹</span><span class="td-st bg-doing c-doing">进行中</span><span class="t-due">8月24日截止</span></span>
+        </div>
+        <div class="todo-item">
+          <span class="dot overdue"></span>
+          <span class="t-content">外包生态整合宣导范围确认（已顺延两周）</span>
+          <span class="t-meta"><span class="t-owner">李雯</span><span class="td-st bg-delay c-delay">已逾期</span><span class="t-due">原8月7日</span></span>
+        </div>
+        <div class="todo-item">
+          <span class="dot done"></span>
+          <span class="t-content">任职资格标准初稿（上周待办 · 已完成）</span>
+          <span class="t-meta"><span class="t-owner">高丽茹</span><span class="td-st bg-done c-done">已完成</span><span class="t-due">8月14日完成</span></span>
+        </div>
       </div>
       <div class="todo-card">
         <div class="t-title">⚡ 需领导决策事项</div>
+        <div class="t-sub">周例会共识 · 待你拍板</div>
         <div class="todo-item"><span class="dot decide"></span><span class="t-content">运营板块招聘达成率偏低，是否增加渠道投入？</span><span class="t-owner">待决策</span></div>
         <div class="todo-item"><span class="dot decide"></span><span class="t-content">外包生态整合延期，宣导范围需确认</span><span class="t-owner">待决策</span></div>
         <div class="todo-item"><span class="dot decide"></span><span class="t-content">招聘数字化2.0 预算追加申请</span><span class="t-owner">待决策</span></div>
@@ -398,19 +436,46 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Micr
 </div>
 
 <script>
+// 场景切换：同一份数据，不同颗粒度
+function switchScene(scene){
+  document.querySelectorAll('.scene-tab').forEach(t=>t.classList.remove('active'));
+  event.target.classList.add('active');
+
+  const daily = document.getElementById('secDaily');
+  const todo = document.getElementById('secTodo');
+  const summary = document.getElementById('secSummary');
+
+  if(scene === 'boss'){
+    // 大老板：只看结论+数据+重点+决策，隐藏日常明细和待办
+    daily.classList.add('hidden');
+    todo.classList.add('hidden');
+  } else if(scene === 'cadre'){
+    // 干部例会：看重点+待办+决策，隐藏日常明细
+    daily.classList.add('hidden');
+    todo.classList.remove('hidden');
+  } else {
+    // 团队例会：全看，日常明细展开
+    daily.classList.remove('hidden');
+    todo.classList.remove('hidden');
+    document.getElementById('dailyBody').classList.remove('hidden');
+    document.getElementById('dailyArrow').textContent = '▲ 收起';
+  }
+}
+
 function toggleDaily(){
   var body=document.getElementById('dailyBody');
   var arrow=document.getElementById('dailyArrow');
   body.classList.toggle('hidden');
   arrow.textContent = body.classList.contains('hidden') ? '▼ 展开' : '▲ 收起';
 }
+
 new Chart(document.getElementById('chartTrend'), {
   type: 'line',
   data: {
-    labels: ['第28周','第29周','第30周','第31周','第32周','第33周'],
+    labels: ['第29周','第30周','第31周','第32周','第33周','第34周'],
     datasets: [{
       label: '达成率',
-      data: [58, 62, 60, 66, 67, 72],
+      data: [62, 60, 66, 67, 67, 72],
       borderColor: '#7c3aed',
       backgroundColor: 'rgba(124,58,237,0.10)',
       fill: true, tension: 0.35,
