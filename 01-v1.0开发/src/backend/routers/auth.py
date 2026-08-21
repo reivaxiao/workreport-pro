@@ -25,6 +25,7 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
         "user": {
             "id": user.id, "name": user.name, "role": user.role,
             "business_line": user.business_line, "is_manager": user.is_manager,
+            "is_sysadmin": user.is_sysadmin,
             "avatar_color": user.avatar_color,
         }
     }

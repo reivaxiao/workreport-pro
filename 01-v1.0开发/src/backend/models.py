@@ -32,7 +32,8 @@ class User(Base):
     password_hash = Column(String(128), default="")      # 密码哈希
     role = Column(String(50), nullable=False)           # 职能：COE / HRBP
     business_line = Column(String(50), default="")       # 业务板块：营销/产研/运营
-    is_manager = Column(Integer, default=0)              # 是否管理者 0=否 1=是
+    is_manager = Column(Integer, default=0)              # 业务管理者：看全员汇报视图、批注 0=否 1=是
+    is_sysadmin = Column(Integer, default=0)             # 系统管理员：重置密码、成员管理 0=否 1=是
     avatar_color = Column(String(20), default="#534AB7") # 头像颜色
 
     work_items = relationship("WorkItem", back_populates="owner")
@@ -179,8 +180,8 @@ def seed_data():
             return
 
         users = [
-            User(name="肖凌华", username="xlinghua", password_hash=hash_password("123456"), role="管理者", is_manager=1, avatar_color="#7c3aed"),
-            User(name="程宇欣", username="cyuxin", password_hash=hash_password("123456"), role="COE", business_line="", is_manager=1, avatar_color="#2563eb"),
+            User(name="肖凌华", username="xlinghua", password_hash=hash_password("123456"), role="管理者", is_manager=1, is_sysadmin=1, avatar_color="#7c3aed"),
+            User(name="程宇欣", username="cyuxin", password_hash=hash_password("123456"), role="COE", business_line="", is_manager=0, is_sysadmin=1, avatar_color="#2563eb"),
             User(name="李微微", username="lweiwei", password_hash=hash_password("123456"), role="HRBP", business_line="营销板块", avatar_color="#16a34a"),
             User(name="高丽茹", username="gliru", password_hash=hash_password("123456"), role="HRBP", business_line="产研板块", avatar_color="#f97316"),
             User(name="李雯", username="lwen", password_hash=hash_password("123456"), role="HRBP", business_line="运营板块", avatar_color="#eab308"),

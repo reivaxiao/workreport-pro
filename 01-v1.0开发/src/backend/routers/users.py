@@ -16,6 +16,7 @@ def list_users(db: Session = Depends(get_db)):
             "role": u.role,
             "business_line": u.business_line,
             "is_manager": u.is_manager,
+            "is_sysadmin": u.is_sysadmin,
             "avatar_color": u.avatar_color,
         }
         for u in users
@@ -30,4 +31,5 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
     return {
         "id": u.id, "name": u.name, "role": u.role,
         "business_line": u.business_line, "is_manager": u.is_manager,
+        "is_sysadmin": u.is_sysadmin,
     }
