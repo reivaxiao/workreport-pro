@@ -50,13 +50,45 @@ def compute_status(item: WorkItem) -> str:
     return "进行中"
 
 
-# ========== 审阅 Agent（规则版，后续接 DeepSeek） ==========
+# ========== 审阅 Agent（DeepSeek 驱动） ==========
 class ReviewRequest(BaseModel):
     user_id: int
     week_start: str
 
 
-def analyze_progress(progress, last_week_progress, item_name, db) -> List[dict]:
+def analyze_progress_with_ai(progress, last_week_progress, item_name) -> List[dict]:
+    """调用 DeepSeek 审阅单条工作事项，返回结构化建议列表"""
+    try:
+        from agents.deepseek_client import build_review_messages, chat_json
+        messages = build_review_messages(
+            item_name=item_name,
+            progress=progress.progress,
+            next_plan=progress.next_plan,
+            blockers=progress.blockers,
+            last_week_progress=last_week_progress.progress if last_week_progress else "",
+            last_week_next_plan=last_week_progress.next_plan if last_week_progress else "",
+        )
+        result = chat_json(messages)
+        if isinstance(result, list):
+            # 过滤出有效建议
+            valid = []
+            for r in result:
+                if isinstance(r, dict) and r.get("message"):
+                    valid.append({
+                        "type": r.get("type", "建议"),
+                        "field": r.get("field", "progress"),
+                        "message": r["message"],
+                    })
+            return valid
+        return []
+    except Exception as e:
+        # AI 调用失败时，降级到规则检查
+        print(f"[审阅Agent] DeepSeek 调用失败，降级到规则检查: {e}")
+        return analyze_progress_fallback(progress, last_week_progress, item_name)
+
+
+def analyze_progress_fallback(progress, last_week_progress, item_name) -> List[dict]:
+    """规则版兜底（DeepSeek 不可用时的降级方案）"""
     suggestions = []
     if not progress.progress.strip() or len(progress.progress.strip()) < 5:
         suggestions.append({"type": "warning", "field": "progress",
@@ -89,7 +121,7 @@ def agent_review(data: ReviewRequest, db: Session = Depends(get_db)):
         last_progress = db.query(WeeklyProgress).filter(
             WeeklyProgress.work_item_id == item.id,
             WeeklyProgress.week_start == last_week).first()
-        suggestions = analyze_progress(progress, last_progress, item.name, db)
+        suggestions = analyze_progress_with_ai(progress, last_progress, item.name)
         for s in suggestions:
             s["work_item_id"] = item.id
             s["work_item_name"] = item.name
