@@ -37,7 +37,7 @@ class User(Base):
     avatar_color = Column(String(20), default="#534AB7") # 头像颜色
 
     work_items = relationship("WorkItem", back_populates="owner")
-    annotations = relationship("Annotation", back_populates="manager")
+    annotations = relationship("Annotation", back_populates="manager", foreign_keys="Annotation.manager_id")
 
 
 # ========== 年度目标表 ==========
@@ -118,12 +118,13 @@ class Annotation(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     manager_id = Column(Integer, ForeignKey("users.id"))   # 管理者
-    work_item_id = Column(Integer, ForeignKey("work_items.id"))
+    work_item_id = Column(Integer, ForeignKey("work_items.id"), nullable=True)  # 可为空（针对汇总/全员的批注）
     week_start = Column(String(20), nullable=False)
     content = Column(Text, default="")                     # 批注内容
+    target_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # 指定接收人（AI识别点名）；空=参与该事项的人或全员
     created_at = Column(DateTime, default=datetime.now)
 
-    manager = relationship("User", back_populates="annotations")
+    manager = relationship("User", back_populates="annotations", foreign_keys=[manager_id])
 
 
 # ========== 待办表 ==========
@@ -159,6 +160,16 @@ class WeeklySubmitStatus(Base):
     week_start = Column(String(20), nullable=False)
     status = Column(String(20), default="draft")           # draft / submitted / overdue
     submitted_at = Column(DateTime, nullable=True)
+
+
+# ========== 周汇报稿表（管理者编辑保存的向上汇报文字） ==========
+class WeeklySummary(Base):
+    __tablename__ = "weekly_summary"
+
+    id = Column(Integer, primary_key=True, index=True)
+    week_start = Column(String(20), nullable=False, unique=True)
+    content = Column(Text, default="")
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
 
 def init_db():

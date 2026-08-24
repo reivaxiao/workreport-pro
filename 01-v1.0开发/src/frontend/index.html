@@ -5,8 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WorkReport HR-Pro · 工作汇报</title>
 <style>
+/* 腾讯体字体 */
+@font-face{
+  font-family:'TencentSans';
+  src:url('/static/fonts/TencentSans-Medium.ttf') format('truetype');
+  font-weight:400 700;
+  font-display:swap;
+}
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#f4f5f7;color:#333;line-height:1.6}
+body{font-family:'TencentSans',-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#f4f5f7;color:#333;line-height:1.6}
 
 .topbar{background:linear-gradient(135deg,#5b21b6,#7c3aed,#a855f7);color:#fff;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
 .topbar .logo{font-size:17px;font-weight:700}
@@ -72,6 +79,11 @@ table.report td textarea:focus{border-color:#7c3aed;outline:none;background:#fff
 .att-btn{font-size:11px;color:#6d28d9;background:none;border:1px dashed #c4b5fd;border-radius:6px;padding:3px 10px;cursor:pointer}
 .att-btn:hover{background:#f5f3ff}
 
+/* AI 提炼按钮 */
+.polish-btn{display:inline-block;margin-top:6px;font-size:11px;color:#6d28d9;background:#f5f3ff;border:1px dashed #c4b5fd;border-radius:6px;padding:3px 10px;cursor:pointer}
+.polish-btn:hover{background:#ede9fe}
+.polish-btn:disabled{opacity:.6;cursor:not-allowed}
+
 /* 工作事项概览 */
 .overview-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
 .overview-head h2{margin:0}
@@ -122,9 +134,30 @@ table.report td textarea:focus{border-color:#7c3aed;outline:none;background:#fff
 .login-card input:focus{border-color:#7c3aed;outline:none}
 .login-card .btn{width:100%;padding:11px;font-size:14px}
 .login-card .tip{font-size:11px;color:#bbb;text-align:center;margin-top:14px}
+.quick-login{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px}
+.quick-btn{font-size:12px;color:#6d28d9;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:16px;padding:5px 14px;cursor:pointer;transition:.15s}
+.quick-btn:hover{background:#ede9fe;border-color:#c4b5fd}
 
 .logout-btn{font-size:12px;color:#fff;background:rgba(255,255,255,.2);border:none;border-radius:6px;padding:4px 10px;cursor:pointer}
 .logout-btn:hover{background:rgba(255,255,255,.3)}
+
+/* AI 审阅 */
+.btn .spinner{display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;vertical-align:-1px;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.btn.loading{opacity:.7;cursor:not-allowed}
+
+.ai-notice{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #ddd6fe;border-radius:12px;padding:12px 18px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.04);font-size:13px;color:#555}
+.ai-notice .spinner{border-color:rgba(124,58,237,.25);border-top-color:#7c3aed}
+
+.ai-bubble{background:#f7f5ff;border:1px solid #e2dcff;border-radius:14px;padding:16px 18px;margin-bottom:12px}
+.ai-bubble .b-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12px;color:#6d28d9;font-weight:600}
+.ai-bubble .b-item{font-size:13px;color:#333;line-height:1.7}
+.ai-bubble .b-type{display:inline-block;font-size:10px;padding:1px 8px;border-radius:8px;background:#ede9fe;color:#6d28d9;font-weight:600}
+.ai-bubble .b-actions{display:flex;gap:10px;margin-top:12px}
+.ai-progress{font-size:12px;color:#999;text-align:center;margin-top:6px}
+
+@keyframes flashRow{0%{background:#ede9fe}100%{background:transparent}}
+.flash-row{animation:flashRow 1.2s ease}
 
 @media(max-width:760px){.metrics{grid-template-columns:repeat(2,1fr)}.topbar{padding:12px 16px}.container{padding:12px}}
 </style>
@@ -147,10 +180,11 @@ table.report td textarea:focus{border-color:#7c3aed;outline:none;background:#fff
         <div class="logo">WorkReport HR-Pro</div>
         <div class="sub">请登录后填写本周工作汇报</div>
         <div class="err" id="loginErr"></div>
-        <input id="loginUsername" placeholder="账号" autocomplete="username">
+        <input id="loginUsername" placeholder="账号（拼音）" autocomplete="username">
         <input id="loginPassword" type="password" placeholder="密码" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
         <button class="btn btn-primary" onclick="doLogin()">登 录</button>
-        <div class="tip">默认账号：成员姓名拼音（如李微微 lweiwei）· 密码 123456</div>
+        <div class="tip">密码统一 123456 · 点下方姓名直接填入账号</div>
+        <div class="quick-login" id="quickLogin"></div>
       </div>
     </div>
   </div>
@@ -160,7 +194,6 @@ table.report td textarea:focus{border-color:#7c3aed;outline:none;background:#fff
     <div class="card" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
       <h2 style="margin:0">本周工作汇报 <span style="font-size:12px;color:#888;font-weight:400" id="weekLabel"></span></h2>
       <div style="display:flex;gap:8px">
-        <button class="btn btn-outline btn-sm" onclick="submitReview()">提交前 AI 审阅</button>
         <button class="btn btn-outline btn-sm" onclick="saveDraft()">保存草稿</button>
         <button class="btn btn-primary btn-sm" onclick="submitReport()">提交周报</button>
       </div>
@@ -212,6 +245,15 @@ table.report td textarea:focus{border-color:#7c3aed;outline:none;background:#fff
 
   <!-- 汇报视图 -->
   <div id="page-dashboard" class="hidden">
+    <div class="card" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <h2 style="margin:0">管理者汇报视图 <span style="font-size:12px;color:#888;font-weight:400" id="dashWeekLabel"></span></h2>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline btn-sm" id="btnMgrReview" onclick="managerReview()">一键 AI 审阅</button>
+        <button class="btn btn-outline btn-sm" onclick="showAnnotate()">＋ 写批注</button>
+      </div>
+    </div>
+    <div class="card hidden" id="mgrReviewPanel"></div>
+    <div class="card hidden" id="annotatePanel"></div>
     <div class="metrics" id="dashMetrics"></div>
     <div id="dashContent"></div>
   </div>
@@ -228,9 +270,20 @@ async function init(){
   allGoals = await (await fetch('/api/goals')).json();
   const goalSel = document.getElementById('niGoal');
   goalSel.innerHTML = '<option value="">不关联目标</option>' + allGoals.map(g=>`<option value="${g.id}">${g.name} (${g.weight}%)</option>`).join('');
+  // 快速登录账号列表
+  allUsers = await (await fetch('/api/users')).json();
+  const ql = document.getElementById('quickLogin');
+  ql.innerHTML = allUsers.map(u=>`<span class="quick-btn" onclick="fillAccount('${u.username}','${u.name}')">${u.name}</span>`).join('');
   // 已登录则直接进入，否则显示登录页
   const saved = sessionStorage.getItem('wr_user');
   if(saved){ enterApp(JSON.parse(saved)); }
+}
+
+function fillAccount(username, name){
+  document.getElementById('loginUsername').value = username;
+  document.getElementById('loginPassword').focus();
+  const e = document.getElementById('loginErr');
+  e.style.display = 'none';
 }
 
 async function doLogin(){
@@ -337,12 +390,17 @@ async function loadReport(){
       </td>
       <td class="col-goal">${d.target_desc||'<span style="color:#ccc">—</span>'}</td>
       <td class="col-lastweek"><div style="font-size:12px;color:#666">${d.last_week_progress||'<span style="color:#ccc">无</span>'}</div></td>
-      <td class="col-progress"><textarea class="p-input" data-field="progress" placeholder="本周进展 + 下阶段计划">${d.progress||''}</textarea></td>
+      <td class="col-progress">
+        <textarea class="p-input" data-field="progress" placeholder="本周进展 + 下阶段计划">${d.progress||''}</textarea>
+        <button class="polish-btn" data-item-id="${d.work_item_id}" onclick="polishText(this)">✨ AI 提炼</button>
+      </td>
       <td class="col-support"><textarea class="p-input" data-field="blockers" placeholder="需要什么支持 / 待决策事项">${d.blockers||''}</textarea></td>
       <td class="col-cum">${cumHtml}</td>
     </tr>`;
   }).join('');
   alignTextareas();
+  // 员工端：加载管理者反馈
+  if(!currentUser.is_manager){ loadMyFeedback(); }
 }
 
 // 让文本框底部与"工作事项"列（含对齐目标折叠）下部对齐
@@ -399,13 +457,36 @@ async function saveDraft(){
   alert('草稿已保存');
 }
 
-async function submitReview(){
-  await saveDraft();
-  const data = await (await fetch('/api/agent/review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:currentUser.id,week_start:WEEK_START})})).json();
-  const panel = document.getElementById('aiPanel');
-  panel.classList.remove('hidden');
-  if(!data.suggestions.length){ panel.innerHTML='<h2>AI 审阅完成</h2><p style="color:#16a34a">内容看起来不错，可以提交。</p>'; return; }
-  panel.innerHTML = '<h2>AI 审阅建议（'+data.total_suggestions+'条）</h2>' + data.suggestions.map(s=>`<div class="todo-item"><span class="dot" style="background:#7c3aed"></span><div><b>${s.work_item_name}</b>：${s.message}</div></div>`).join('');
+// ========== AI 提炼（员工端辅助，只润色不追问） ==========
+async function polishText(btn){
+  const itemId = btn.dataset.itemId;
+  const tr = document.querySelector(`#reportBody tr[data-item-id="${itemId}"]`);
+  const ta = tr.querySelector('[data-field="progress"]');
+  const text = ta.value.trim();
+  if(!text){ alert('请先填写本周进展内容，再点提炼'); return; }
+
+  // 按钮进入 loading
+  const origHtml = btn.innerHTML;
+  btn.innerHTML = '<span class="spinner"></span>提炼中…';
+  btn.disabled = true;
+
+  try{
+    const data = await (await fetch('/api/agent/polish',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({work_item_id:parseInt(itemId), text})})).json();
+    btn.innerHTML = origHtml;
+    btn.disabled = false;
+    if(data.refined && data.refined !== text){
+      // 弹确认：采纳 or 保持原文
+      if(confirm('AI 提炼结果：\n\n'+data.refined+'\n\n是否用提炼后的文字替换原文？')){
+        ta.value = data.refined;
+      }
+    } else {
+      alert('这段已经挺精炼了，无需改动。');
+    }
+  }catch(e){
+    btn.innerHTML = origHtml;
+    btn.disabled = false;
+    alert('提炼失败，请稍后重试');
+  }
 }
 
 async function submitReport(){
@@ -441,6 +522,7 @@ async function addItem(){
 
 // ========== 汇报视图 ==========
 async function loadDashboard(){
+  document.getElementById('dashWeekLabel').textContent = `本周: ${WEEK_START}`;
   const d = await (await fetch(`/api/agent/dashboard?week_start=${WEEK_START}`)).json();
   const km = d.key_metrics;
   const metrics = [
@@ -480,6 +562,127 @@ async function loadDashboard(){
   }
 
   document.getElementById('dashContent').innerHTML = html;
+}
+
+// ========== 管理者一键 AI 审阅 ==========
+const MGR_TYPE_STYLE = {风险:'#ef4444',进度:'#f97316',亮点:'#16a34a',遗漏:'#ca8a04'};
+
+async function managerReview(){
+  const btn = document.getElementById('btnMgrReview');
+  if(btn.classList.contains('loading')) return;
+  btn.classList.add('loading');
+  btn.innerHTML = '<span class="spinner"></span>AI 审阅中…';
+
+  const panel = document.getElementById('mgrReviewPanel');
+  panel.classList.remove('hidden');
+  panel.innerHTML = '<div class="ai-notice"><span class="spinner"></span><span>AI 正在审阅全员周报，请稍候…</span></div>';
+
+  try{
+    const data = await (await fetch('/api/agent/manager-review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({week_start:WEEK_START})})).json();
+    btn.classList.remove('loading');
+    btn.innerHTML = '一键 AI 审阅';
+
+    // 1. 汇报稿（可编辑）
+    const summaryHtml = data.summary
+      ? `<div class="ai-bubble" style="border-color:#c4b5fd">
+          <div class="b-head"><span class="b-type">向上汇报稿</span><span style="color:#aaa;font-weight:400">可编辑，改完点保存</span></div>
+          <textarea id="summaryEditor" style="width:100%;min-height:180px;border:1px solid #ddd;border-radius:8px;padding:12px;font-size:13px;font-family:inherit;line-height:1.8;resize:vertical">${data.summary}</textarea>
+          <div class="b-actions">
+            <button class="btn btn-primary btn-sm" onclick="saveSummary()">保存汇报稿</button>
+          </div>
+        </div>`
+      : '';
+
+    // 2. 审阅意见
+    let suggestionsHtml = '';
+    if(!data.suggestions.length){
+      suggestionsHtml = '<div class="ai-bubble" style="text-align:center"><div style="color:#16a34a;font-weight:700">✓ 团队周报整体正常</div><div style="font-size:12px;color:#888;margin-top:4px">未发现明显风险或异常。</div></div>';
+    } else {
+      const typeLabels = {风险:'风险',进度:'进度',亮点:'亮点',遗漏:'遗漏'};
+      suggestionsHtml = '<h2 style="font-size:15px;margin:14px 0 12px">AI 审阅意见（'+data.total+'条）</h2>' + data.suggestions.map((s, i)=>{
+        const color = MGR_TYPE_STYLE[s.type] || '#7c3aed';
+        return `<div class="ai-bubble" style="margin-bottom:10px">
+          <div class="b-head"><span class="b-type" style="background:${color}22;color:${color}">${typeLabels[s.type]||s.type}</span><span>${s.target||''}</span></div>
+          <div class="b-item">${s.message}</div>
+          <div class="b-actions">
+            <button class="btn btn-sm" style="background:#16a34a;color:#fff" onclick="feedbackRule(${i},'认可')">👍 认可</button>
+            <button class="btn btn-sm" style="background:#f0f0f0;color:#666" onclick="feedbackRule(${i},'纠正')">👎 纠正</button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+    panel.innerHTML = summaryHtml + suggestionsHtml;
+    // 存当前审阅结果供认可/纠正使用
+    window._reviewResult = data.suggestions;
+  }catch(e){
+    btn.classList.remove('loading');
+    btn.innerHTML = '一键 AI 审阅';
+    panel.innerHTML = '<div class="ai-notice" style="border-color:#fca5a5;color:#dc2626">AI 审阅失败，请稍后重试。</div>';
+  }
+}
+
+async function saveSummary(){
+  const content = document.getElementById('summaryEditor').value;
+  await fetch('/api/agent/save-summary',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({week_start:WEEK_START, content})});
+  alert('汇报稿已保存');
+}
+
+async function feedbackRule(index, source){
+  const s = window._reviewResult && window._reviewResult[index];
+  if(!s) return;
+  if(source === '纠正'){
+    const note = prompt('请写下正确的审阅方向（会沉淀给 AI 学习）：', s.message);
+    if(!note) return;
+    await fetch('/api/agent/feedback-rules',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:note, source:'纠正', agent:'审阅Agent'})});
+    alert('已记录纠正，AI 下次会参考');
+  } else {
+    await fetch('/api/agent/feedback-rules',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:s.message, source:'认可', agent:'审阅Agent'})});
+    alert('已记录认可');
+  }
+}
+
+// ========== 管理者写批注 ==========
+function showAnnotate(){
+  const panel = document.getElementById('annotatePanel');
+  panel.classList.remove('hidden');
+  panel.innerHTML = `
+    <h2 style="font-size:15px;margin-bottom:12px">写批注（反馈给员工）</h2>
+    <textarea id="annContent" style="width:100%;min-height:90px;border:1px solid #ddd;border-radius:8px;padding:10px;font-size:13px;font-family:inherit;resize:vertical" placeholder="例如：员工访谈数量不够，后续需加强。或：李微微应增加访谈员工数量。点名则只发给对应员工，不点名则全员可见"></textarea>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn btn-primary btn-sm" onclick="submitAnnotation()">发布批注</button>
+      <button class="btn btn-gray btn-sm" onclick="document.getElementById('annotatePanel').classList.add('hidden')">取消</button>
+    </div>
+    <div id="annResult" style="margin-top:10px;font-size:12px;color:#16a34a"></div>`;
+}
+
+async function submitAnnotation(){
+  const content = document.getElementById('annContent').value.trim();
+  if(!content){ alert('请填写批注内容'); return; }
+  const r = await fetch('/api/annotations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({manager_id:currentUser.id, week_start:WEEK_START, content})});
+  const res = await r.json();
+  const result = document.getElementById('annResult');
+  if(res.target_user_name){
+    result.textContent = '✓ 批注已发布，点名反馈给：'+res.target_user_name;
+  } else {
+    result.textContent = '✓ 批注已发布（未点名，全员可见）';
+  }
+  document.getElementById('annContent').value = '';
+}
+
+// ========== 员工端：查看管理者反馈 ==========
+async function loadMyFeedback(){
+  // 员工登录后加载发给自己的批注
+  const r = await fetch(`/api/annotations?week_start=${WEEK_START}&user_id=${currentUser.id}`);
+  const anns = await r.json();
+  const panel = document.getElementById('aiPanel');
+  if(anns.length){
+    panel.classList.remove('hidden');
+    panel.innerHTML = '<h2 style="font-size:15px;margin-bottom:12px">📣 管理者反馈（'+anns.length+'条）</h2>' + anns.map(a=>`
+      <div class="ai-bubble" style="border-color:#fde68a">
+        <div class="b-head"><span class="b-type" style="background:#fef3c7;color:#b45309">反馈</span><span>${a.manager_name||''}</span></div>
+        <div class="b-item">${a.content}</div>
+      </div>`).join('');
+  }
 }
 
 init();

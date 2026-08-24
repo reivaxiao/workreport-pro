@@ -13,6 +13,7 @@ def list_users(db: Session = Depends(get_db)):
         {
             "id": u.id,
             "name": u.name,
+            "username": u.username,
             "role": u.role,
             "business_line": u.business_line,
             "is_manager": u.is_manager,
