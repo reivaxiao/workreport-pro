@@ -202,11 +202,40 @@ table.report td textarea:focus{border-color:#7c3aed;outline:none;background:#fff
 .ann-mini{font-size:11px;color:#6d28d9;background:none;border:1px dashed #c4b5fd;border-radius:6px;padding:2px 8px;cursor:pointer;margin-left:auto}
 .ann-mini:hover{background:#f5f3ff}
 
+/* 日常明细分组：职能 → 一级模块 → 二级模块 → 人 */
+.func-block{background:#fff;border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.04);padding:14px 20px;margin-bottom:14px}
+.func-head{font-size:14px;font-weight:700;color:#1a1a1a;padding-bottom:10px;border-bottom:2px solid #ede9fe;margin-bottom:6px}
+.mod1-block{margin:6px 0}
+.mod1-head{font-size:13px;font-weight:700;color:#6d28d9;background:#f7f5ff;border-radius:8px;padding:7px 12px;margin:8px 0 4px}
+.mod2-block{margin:4px 0 4px 6px}
+.mod2-head{font-size:12px;color:#555;padding:4px 12px;font-weight:600}
+.mod2-block .key-item{padding:8px 12px}
+.key-item .m-avatar{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;flex-shrink:0}
+
+.key-members{margin-top:6px;padding:6px 10px;background:#faf9ff;border-radius:8px;display:flex;flex-direction:column;gap:4px}
+.km-line{font-size:12px;color:#666}
+
+.kw-atts{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.kw-ops{display:flex;gap:6px;margin-top:8px;flex-shrink:0;align-items:center}
+
+.w-main{flex:1;min-width:0}
+.w-detail{font-size:12px;color:#666;margin-top:4px;line-height:1.6}
+.wd-label{display:inline-block;font-size:11px;color:#6d28d9;background:#f5f3ff;border-radius:4px;padding:0 6px;margin-right:6px}
+
+/* 重点工作 + 目标考核 两栏 */
+.dash-cols{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;align-items:start}
+.dash-col{background:#fff;border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.04);padding:16px 20px}
+.dash-col .section-title{margin-top:0}
+.dash-col .key-item{padding:10px 0;border-bottom:1px solid #f5f5f5}
+.dash-col .key-item:last-child{border-bottom:none}
+.goal-kpi{font-size:12px;color:#888;margin:4px 0 8px;line-height:1.6}
+.goal-cum{font-size:12px;color:#6d28d9;font-weight:600;background:#f5f3ff;border-radius:8px;padding:6px 10px;margin-bottom:8px}
+
 .ann-inline{padding:10px 14px;background:#faf8ff;border:1px solid #ede9fe;border-radius:10px;margin:0 0 6px}
 .ann-inline-ta{width:100%;min-height:70px;border:1px solid #ddd;border-radius:8px;padding:9px 11px;font-size:13px;font-family:inherit;resize:vertical}
 .ann-inline-result{font-size:12px;color:#16a34a;margin-top:8px}
 
-@media(max-width:760px){.metrics{grid-template-columns:repeat(2,1fr)}.topbar{padding:12px 16px}.container{padding:12px}.todo-grid{grid-template-columns:1fr}.scene-tabs{flex-wrap:wrap}}
+@media(max-width:760px){.metrics{grid-template-columns:repeat(2,1fr)}.topbar{padding:12px 16px}.container{padding:12px}.todo-grid{grid-template-columns:1fr}.scene-tabs{flex-wrap:wrap}.dash-cols{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -219,6 +248,7 @@ table.report td textarea:focus{border-color:#7c3aed;outline:none;background:#fff
   <div class="nav hidden" id="nav">
     <button class="nav-btn active" data-page="report">填写周报</button>
     <button class="nav-btn hidden" data-page="dashboard" id="navDash">汇报视图</button>
+    <button class="nav-btn hidden" data-page="goal-review" id="navGoal">目标考核</button>
   </div>
 
   <div id="page-select">
@@ -255,9 +285,18 @@ table.report td textarea:focus{border-color:#7c3aed;outline:none;background:#fff
       <div class="ov-list" id="itemsOverview"></div>
       <div id="addItemForm" class="hidden" style="margin-top:16px;padding-top:16px;border-top:1px solid #eee">
         <h3 style="font-size:14px;margin-bottom:12px">新增工作事项</h3>
-        <div class="form-group"><label>事项名称</label><input id="niName" placeholder="输入工作事项名称"></div>
-        <div class="form-group"><label>分类</label><select id="niCategory"><option>年度重点工作</option><option>自主专项工作</option><option>常规工作</option></select></div>
-        <div class="form-group"><label>重要性</label><select id="niImportance"><option value="高">高</option><option value="中" selected>中</option><option value="低">低</option></select></div>
+        <div class="form-group"><label>职能</label><select id="niFunction" onchange="onFunctionChange()"></select></div>
+        <div class="form-group"><label>一级模块（工作模块）</label><select id="niModule1" onchange="onModule1Change()"></select></div>
+        <div class="form-group"><label>二级模块（具体工作事项）</label>
+          <select id="niModule2"></select>
+          <div style="margin-top:4px;font-size:11px;color:#999">找不到？<a href="#" onclick="showNewModule2();return false" style="color:#6d28d9">新增一个二级模块</a></div>
+        </div>
+        <div class="form-group hidden" id="niNewModule2Wrap">
+          <label>新二级模块名称</label>
+          <input id="niNewModule2" placeholder="例如：海外招聘">
+        </div>
+        <div class="form-group"><label>工作性质</label><select id="niCategory"><option>年度重点工作</option><option>年度专项工作</option><option>日常常规工作</option></select></div>
+        <div class="form-group"><label>工作目标</label><textarea id="niDesc" placeholder="这个事项要达成什么目标"></textarea></div>
         <div class="form-group"><label>关联年度目标</label><select id="niGoal"></select></div>
         <div class="form-group"><label>预计完成时间</label><input id="niDue" type="date"></div>
         <div class="form-group"><label>是否累计制工作</label><select id="niCum" onchange="toggleCum()"><option value="0">否（一次性项目）</option><option value="1">是（持续累计）</option></select></div>
@@ -266,7 +305,6 @@ table.report td textarea:focus{border-color:#7c3aed;outline:none;background:#fff
           <textarea id="niCumMetrics" placeholder="offer|Offer数|个&#10;onboard|入职数|人"></textarea>
           <div style="font-size:11px;color:#999;margin-top:4px">常用：访谈填 count|访谈人次|人次；培训填 times|培训场次|场</div>
         </div>
-        <div class="form-group"><label>工作目标</label><textarea id="niDesc" placeholder="这个事项要达成什么目标"></textarea></div>
         <div class="btn-group"><button class="btn btn-primary" onclick="addItem()">确认添加</button><button class="btn btn-gray" onclick="hideAddItem()">取消</button></div>
       </div>
     </div>
@@ -321,6 +359,14 @@ table.report td textarea:focus{border-color:#7c3aed;outline:none;background:#fff
     </div>
     <div id="dashContent"></div>
   </div>
+
+  <!-- 目标考核 -->
+  <div id="page-goal-review" class="hidden">
+    <div class="card" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <h2 style="margin:0">目标考核 <span style="font-size:12px;color:#888;font-weight:400" id="goalWeekLabel"></span></h2>
+    </div>
+    <div id="goalReviewContent"></div>
+  </div>
 </div>
 
 <script>
@@ -338,6 +384,8 @@ async function init(){
   allUsers = await (await fetch('/api/users')).json();
   const ql = document.getElementById('quickLogin');
   ql.innerHTML = allUsers.map(u=>`<span class="quick-btn" onclick="fillAccount('${u.username}','${u.name}')">${u.name}</span>`).join('');
+  // 分类字典
+  loadCategories();
   // 已登录则直接进入，否则显示登录页
   const saved = sessionStorage.getItem('wr_user');
   if(saved){ enterApp(JSON.parse(saved)); }
@@ -373,7 +421,10 @@ function enterApp(user){
   document.getElementById('headerName').textContent = `${currentUser.name} (${currentUser.role})`;
   document.getElementById('logoutBtn').classList.remove('hidden');
   document.getElementById('nav').classList.remove('hidden');
-  if(currentUser.is_manager) document.getElementById('navDash').classList.remove('hidden');
+  if(currentUser.is_manager){
+    document.getElementById('navDash').classList.remove('hidden');
+    document.getElementById('navGoal').classList.remove('hidden');
+  }
   switchPage('report');
 }
 
@@ -385,12 +436,13 @@ function logout(){
 document.querySelectorAll('.nav-btn').forEach(b=>b.addEventListener('click',()=>switchPage(b.dataset.page)));
 
 function switchPage(page){
-  ['report','dashboard'].forEach(p=>document.getElementById('page-'+p).classList.add('hidden'));
+  ['report','dashboard','goal-review'].forEach(p=>document.getElementById('page-'+p).classList.add('hidden'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+page).classList.remove('hidden');
   document.querySelector(`[data-page="${page}"]`).classList.add('active');
   if(page==='report') loadReport();
   if(page==='dashboard') loadDashboard();
+  if(page==='goal-review') loadGoalReview();
 }
 
 function stBadge(status){ return `<span class="st ${ST_CLASS[status]||'st-doing'}">${ST_ICON[status]||'●'} ${status}</span>`; }
@@ -561,13 +613,62 @@ async function submitReport(){
 }
 
 // ========== 工作事项 ==========
-function showAddItem(){ document.getElementById('addItemForm').classList.remove('hidden'); }
+let allCategories = [];  // 分类字典树
+
+async function loadCategories(){
+  allCategories = await (await fetch('/api/categories')).json();
+  const funcSel = document.getElementById('niFunction');
+  funcSel.innerHTML = '<option value="">请选择职能</option>' + allCategories.map(f=>`<option value="${f.name}">${f.name}</option>`).join('');
+}
+
+function onFunctionChange(){
+  const funcName = document.getElementById('niFunction').value;
+  const m1Sel = document.getElementById('niModule1');
+  const m2Sel = document.getElementById('niModule2');
+  const f = allCategories.find(x=>x.name===funcName);
+  m1Sel.innerHTML = '<option value="">请选择一级模块</option>' + (f?f.modules.map(m=>`<option value="${m.name}">${m.name}</option>`).join(''):'');
+  m2Sel.innerHTML = '<option value="">请选择二级模块</option>';
+}
+
+function onModule1Change(){
+  const funcName = document.getElementById('niFunction').value;
+  const m1Name = document.getElementById('niModule1').value;
+  const m2Sel = document.getElementById('niModule2');
+  const f = allCategories.find(x=>x.name===funcName);
+  const m1 = f?f.modules.find(m=>m.name===m1Name):null;
+  m2Sel.innerHTML = '<option value="">请选择二级模块</option>' + (m1?m1.children.map(c=>`<option value="${c.name}">${c.name}</option>`).join(''):'');
+}
+
+function showNewModule2(){
+  document.getElementById('niNewModule2Wrap').classList.remove('hidden');
+  document.getElementById('niModule2').value = '';
+}
+
+function showAddItem(){
+  document.getElementById('addItemForm').classList.remove('hidden');
+  if(!allCategories.length) loadCategories();
+}
 function hideAddItem(){ document.getElementById('addItemForm').classList.add('hidden'); }
 function toggleCum(){ document.getElementById('niCumMetricsWrap').classList.toggle('hidden', document.getElementById('niCum').value!=='1'); }
 
 async function addItem(){
-  const name = document.getElementById('niName').value.trim();
-  if(!name){ alert('请输入事项名称'); return; }
+  const funcName = document.getElementById('niFunction').value;
+  const m1Name = document.getElementById('niModule1').value;
+  let m2Name = document.getElementById('niModule2').value;
+  const newM2 = document.getElementById('niNewModule2').value.trim();
+  if(!funcName || !m1Name){ alert('请选择职能和一级模块'); return; }
+  // 员工新增二级模块
+  if(!m2Name && newM2){
+    m2Name = newM2;
+    const f = allCategories.find(x=>x.name===funcName);
+    const m1 = f?f.modules.find(m=>m.name===m1Name):null;
+    if(m1){
+      await fetch('/api/categories',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({level:3, name:m2Name, parent_id:m1.id})});
+      loadCategories();
+    }
+  }
+  if(!m2Name){ alert('请选择或新增二级模块'); return; }
+
   const isCum = parseInt(document.getElementById('niCum').value);
   let cumMetrics = '[]';
   if(isCum){
@@ -576,11 +677,13 @@ async function addItem(){
   }
   const goalId = document.getElementById('niGoal').value;
   await fetch('/api/items',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-    name, category:document.getElementById('niCategory').value, importance:document.getElementById('niImportance').value,
+    name: m2Name, category:document.getElementById('niCategory').value,
     owner_id:currentUser.id, goal_id:goalId?parseInt(goalId):null, target_desc:document.getElementById('niDesc').value,
-    due_date:document.getElementById('niDue').value, is_cumulative:isCum, cum_metrics:cumMetrics
+    due_date:document.getElementById('niDue').value, is_cumulative:isCum, cum_metrics:cumMetrics,
+    function:funcName, module1:m1Name, module2:m2Name
   })});
-  document.getElementById('niName').value=''; document.getElementById('niDesc').value='';
+  document.getElementById('niDesc').value='';
+  document.getElementById('niNewModule2').value=''; document.getElementById('niNewModule2Wrap').classList.add('hidden');
   hideAddItem(); loadReport();
 }
 
@@ -614,6 +717,35 @@ async function loadDashboard(){
 
   // 3. 内容区（重点 + 日常 + 待办决策）
   renderDashContent();
+}
+
+async function loadGoalReview(){
+  document.getElementById('goalWeekLabel').textContent = `本周: ${WEEK_START}`;
+  // 复用 dashboard 的 goal_review 数据（若未加载则重新拉取）
+  if(!dashData){ dashData = await (await fetch(`/api/agent/dashboard?week_start=${WEEK_START}`)).json(); }
+  const goalReview = dashData.goal_review || [];
+  const container = document.getElementById('goalReviewContent');
+  if(!goalReview.length){
+    container.innerHTML = '<div class="empty">暂无关联年度目标的工作</div>';
+    return;
+  }
+  container.innerHTML = goalReview.map(gr=>{
+    const aggCum = gr.agg_cum && Object.keys(gr.agg_cum).length ? Object.entries(gr.agg_cum).map(([k,v])=>`${k}:${v}`).join(' ') : '';
+    const works = gr.works.map(w=>{
+      const wCum = w.is_cumulative && w.cum_value ? Object.entries(w.cum_value).map(([k,v])=>`${k}:${v}`).join(' ') : '';
+      return `<div class="key-item"><span class="ki-name">${w.name}</span>${stBadge(w.status)}<span style="font-size:11px;color:#888">${w.owner_name}</span>${wCum?`<span class="ki-cum">${wCum}</span>`:''}${w.progress?`<div class="w-detail"><span class="wd-label">本周进展</span>${w.progress}</div>`:''}</div>`;
+    }).join('');
+    return `<div class="card">
+      <div class="goal-head" style="display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700;color:#1a1a1a;margin-bottom:6px">
+        <span class="bar" style="width:4px;height:16px;background:#7c3aed;border-radius:2px"></span>
+        ${gr.goal_name}
+        <span style="font-weight:400;font-size:12px;color:#888">权重 ${gr.weight}%</span>
+      </div>
+      ${gr.kpis?`<div class="goal-kpi">衡量标准：${gr.kpis}</div>`:''}
+      ${aggCum?`<div class="goal-cum">累计汇总：${aggCum}</div>`:''}
+      <div style="margin-top:8px">${works}</div>
+    </div>`;
+  }).join('');
 }
 
 async function loadSummaryBanner(){
@@ -693,46 +825,62 @@ function renderDashContent(){
   const goalNames = {};
   allGoals.forEach(g=>goalNames[g.id]=g.name);
 
-  // 重点工作（按目标分组，每个事项带批注按钮）
-  const keyItems = [];
-  Object.entries(dashData.goals).forEach(([gid, items])=>{
-    items.forEach(it=>keyItems.push({...it, goalName: goalNames[gid]||'未挂目标'}));
-  });
+  // 重点工作项目（不绑目标，只体现工作输出的成果和内容）
+  const keyItems = dashData.key_works || [];
   if(keyItems.length){
     html.push('<div class="section-title"><span class="bar"></span>重点工作项目</div>');
-    Object.entries(dashData.goals).forEach(([gid, items])=>{
-      const gn = goalNames[gid]||'未挂目标';
-      html.push(`<div class="goal-block"><div class="goal-head">${gn}</div>`);
-      items.forEach(it=>{
-        const cumTxt = it.is_cumulative && it.cum_value ? Object.entries(it.cum_value).map(([k,v])=>`${k}:${v}`).join(' ') : '';
-        html.push(`<div class="key-item" data-item-id="${it.id}" data-item-name="${it.name}"><span class="ki-name">${it.name}</span>${impTag(it.importance)}${stBadge(it.status)}<span style="font-size:11px;color:#888">${it.owner_name}${it.due_date?' · 截止'+it.due_date:''}</span>${cumTxt?`<span class="ki-cum">${cumTxt}</span>`:''}<button class="ann-mini" onclick="toggleAnnotate(this)">✎ 批注</button></div>`);
-      });
-      html.push('</div>');
+    keyItems.forEach((it, idx)=>{
+      const cumTxt = it.is_cumulative && it.cum_value ? Object.entries(it.cum_value).map(([k,v])=>`${k}:${v}`).join(' ') : '';
+      // 展示文字：管理者改过的优先，否则显示原始进展
+      let bodyHtml = '';
+      if(it.custom_text){
+        bodyHtml = `<div class="w-detail"><span class="wd-label">汇报文字</span>${it.custom_text}</div>`;
+      } else {
+        if(it.members && it.members.length > 1){
+          bodyHtml = `<div class="key-members">${it.members.map(m=>`<span class="km-line">${m.business_line||''} ${m.owner_name}：${m.progress||'—'}</span>`).join('')}</div>`;
+        } else if(it.members && it.members.length === 1 && it.members[0].progress){
+          bodyHtml = `<div class="w-detail"><span class="wd-label">本周进展</span>${it.members[0].progress}</div>`;
+        }
+      }
+      // 附件列表
+      const attHtml = (it.attachments && it.attachments.length)
+        ? `<div class="kw-atts">${it.attachments.map(a=>`<a class="att-link" href="/api/attachments/${a.id}/download" target="_blank">📎 ${a.filename}</a>`).join('')}</div>`
+        : '';
+      // 操作按钮（管理者）：编辑文字 + 上传附件
+      const opsHtml = `<div class="kw-ops">
+        <button class="ann-mini" style="margin-left:0" onclick="editKeyWorkText(${idx})">✏️ 编辑文字</button>
+        <button class="ann-mini" onclick="uploadKeyAtt(this)">📎 上传附件</button>
+        <input type="file" style="display:none" onchange="doUploadKeyAtt(this, ${idx})">
+      </div>`;
+      html.push(`<div class="key-item" data-item-id="${it.id}" data-item-name="${it.name}"><div class="w-main"><span class="ki-name">${it.name}</span>${impTag(it.importance)}${stBadge(it.status)}<span style="font-size:11px;color:#888">${it.owner_names}${it.due_date?' · 截止'+it.due_date:''}</span>${cumTxt?`<span class="ki-cum">${cumTxt}</span>`:''}${bodyHtml}${attHtml}</div>${opsHtml}</div>`);
     });
   }
 
-  // 日常工作明细（默认收起，按人分组，每个事项带批注）
-  const dailyItems = [];
-  dashData.members.forEach(m=>{
-    m.items.forEach(it=>dailyItems.push({...it, owner_name:m.name, avatar:m.avatar_color, business_line:m.business_line}));
-  });
-  if(dailyItems.length){
+  // 日常工作明细（按 职能 → 一级模块 → 二级模块 → 人 组织，带批注，补全字段）
+  const dailyGrouped = dashData.daily_grouped || [];
+  if(dailyGrouped.length){
     html.push('<div class="section-title"><span class="bar"></span>日常工作明细</div>');
-    html.push(`<div class="daily-card">
-      <div class="daily-head" onclick="toggleDaily()">
-        <div class="left"><span class="title">全员日常工作明细</span><span class="sub">${dashData.members.length}人 · 按人分组</span></div>
-        <span class="daily-arrow" id="dailyArrow">▼ 展开</span>
-      </div>
-      <div class="daily-body hidden" id="dailyBody">`);
-    dashData.members.forEach(m=>{
-      html.push(`<div class="member-group"><div class="member-head"><span class="m-avatar" style="background:${m.avatar_color}">${m.name[0]}</span>${m.name} · ${m.business_line||m.role}</div>`);
-      m.items.forEach(it=>{
-        const cumTxt = it.is_cumulative && it.cum_value ? Object.entries(it.cum_value).map(([k,v])=>`${k}:${v}`).join(' ') : '';
-        html.push(`<div class="key-item" data-item-id="${it.id}" data-item-name="${it.name}"><span class="ki-name">${it.name}</span>${catTag(it.category)}${stBadge(it.status)}${cumTxt?`<span class="ki-cum">${cumTxt}</span>`:''}<button class="ann-mini" onclick="toggleAnnotate(this)">✎ 批注</button></div>`);
+    dailyGrouped.forEach(g=>{
+      html.push(`<div class="func-block"><div class="func-head">${g.function}</div>`);
+      g.modules.forEach(m1=>{
+        html.push(`<div class="mod1-block"><div class="mod1-head">${m1.module1}</div>`);
+        m1.items.forEach(m2=>{
+          html.push(`<div class="mod2-block"><div class="mod2-head">${m2.module2}</div>`);
+          m2.works.forEach(w=>{
+            const cumTxt = w.is_cumulative && w.cum_value ? Object.entries(w.cum_value).map(([k,v])=>`${k}:${v}`).join(' ') : '';
+            const detail = `
+              ${w.target_desc?`<div class="w-detail"><span class="wd-label">目标</span>${w.target_desc}</div>`:''}
+              ${w.progress?`<div class="w-detail"><span class="wd-label">本周成果/下阶段</span>${w.progress}${w.next_plan?' / '+w.next_plan:''}</div>`:''}
+              ${w.due_date?`<div class="w-detail"><span class="wd-label">截止</span>${w.due_date}</div>`:''}
+              ${w.blockers?`<div class="w-detail"><span class="wd-label">需支持</span>${w.blockers}</div>`:''}`;
+            html.push(`<div class="key-item" data-item-id="${w.id}" data-item-name="${w.work_item_name}"><span class="m-avatar" style="background:${w.avatar_color}">${(w.owner_name||'?')[0]}</span><div class="w-main"><span class="ki-name">${w.work_item_name}</span>${stBadge(w.status)}<span style="font-size:11px;color:#888">${w.owner_name}</span>${cumTxt?`<span class="ki-cum">${cumTxt}</span>`:''}${detail}</div><button class="ann-mini" onclick="toggleAnnotate(this)">✎ 批注</button></div>`);
+          });
+          html.push('</div>');
+        });
+        html.push('</div>');
       });
       html.push('</div>');
     });
-    html.push('</div></div>');
   }
 
   // 待办 + 决策
@@ -757,6 +905,45 @@ function renderDashContent(){
   }
 
   document.getElementById('dashContent').innerHTML = html.join('');
+}
+
+// ========== 重点工作：编辑文字 + 上传附件 ==========
+function editKeyWorkText(idx){
+  const it = dashData.key_works[idx];
+  if(!it) return;
+  const cur = it.custom_text || '';
+  const newText = prompt(`编辑「${it.name}」的汇报文字（不影响员工原始周报）：`, cur);
+  if(newText === null) return;  // 取消
+  fetch('/api/agent/key-work-text',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+    work_item_id: it.id, week_start: WEEK_START, content: newText
+  })}).then(()=>{
+    it.custom_text = newText;
+    renderDashContent();
+  });
+}
+
+function uploadKeyAtt(btn){
+  // 触发同行的文件选择框
+  const row = btn.closest('.key-item');
+  const input = row.querySelector('input[type="file"]');
+  if(input) input.click();
+}
+
+async function doUploadKeyAtt(input, idx){
+  const file = input.files[0];
+  if(!file) return;
+  const it = dashData.key_works[idx];
+  if(!it) return;
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('work_item_id', it.id);
+  fd.append('week_start', WEEK_START);
+  fd.append('uploaded_by', currentUser.id);
+  await fetch('/api/attachments',{method:'POST',body:fd});
+  input.value = '';
+  // 刷新数据
+  dashData = await (await fetch(`/api/agent/dashboard?week_start=${WEEK_START}`)).json();
+  renderDashContent();
 }
 
 function toggleDaily(){

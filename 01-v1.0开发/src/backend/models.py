@@ -54,14 +54,30 @@ class AnnualGoal(Base):
     work_items = relationship("WorkItem", back_populates="goal")
 
 
+# ========== 工作分类字典表（职能 / 一级模块 / 二级模块） ==========
+class WorkCategory(Base):
+    __tablename__ = "work_categories"
+
+    id = Column(Integer, primary_key=True, index=True)
+    level = Column(Integer, nullable=False)              # 1=职能 2=一级模块 3=二级模块
+    name = Column(String(100), nullable=False)           # 名称
+    parent_id = Column(Integer, ForeignKey("work_categories.id"), nullable=True)  # 上级分类
+    sort_order = Column(Integer, default=0)              # 排序
+
+    children = relationship("WorkCategory")
+
+
 # ========== 工作事项表 ==========
 class WorkItem(Base):
     __tablename__ = "work_items"
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(200), nullable=False)            # 事项名称
-    category = Column(String(20), nullable=False)         # 年度重点工作 / 自主专项工作 / 常规工作
+    category = Column(String(20), nullable=False)         # 工作性质：年度重点工作 / 年度专项工作 / 日常常规工作
     importance = Column(String(10), default="中")          # 重要性标签：高 / 中 / 低
+    function = Column(String(100), default="")            # 职能（如 招聘COE、KA-HRBP）
+    module1 = Column(String(100), default="")             # 一级模块（工作模块，如 制度管理、渠道管理）
+    module2 = Column(String(100), default="")             # 二级模块（具体工作事项，如 内部推荐、内部招聘）
     owner_id = Column(Integer, ForeignKey("users.id"))    # 负责人
     goal_id = Column(Integer, ForeignKey("annual_goals.id"), nullable=True)  # 关联年度目标
     target_desc = Column(Text, default="")                # 工作目标/背景描述
@@ -138,6 +154,17 @@ class Todo(Base):
     status = Column(String(20), default="进行中")         # 进行中 / 已完成 / 已逾期
     week_start = Column(String(20), default="")           # 来源周
     created_at = Column(DateTime, default=datetime.now)
+
+
+# ========== 重点工作汇报文字表（管理者修改后的提炼文字，不动员工原始周报） ==========
+class KeyWorkText(Base):
+    __tablename__ = "key_work_text"
+
+    id = Column(Integer, primary_key=True, index=True)
+    work_item_id = Column(Integer, ForeignKey("work_items.id"))  # 关联重点工作项
+    week_start = Column(String(20), nullable=False)              # 周
+    content = Column(Text, default="")                           # 管理者修改后的汇报文字
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
 
 # ========== 反馈规则库（Agent进化） ==========
@@ -217,38 +244,78 @@ def seed_data():
         db.add_all(goals)
         db.flush()
 
+        # 工作分类字典（职能 → 一级模块 → 二级模块）
+        category_dict = {
+            "招聘COE": {
+                "招聘系统管理": ["招聘系统运营"],
+                "招聘赋能": ["BP/面试官赋能"],
+                "制度管理": ["制度更新"],
+                "招聘预算管理": ["预算统计/预警"],
+                "供应商管理": ["商务管理"],
+                "内部渠道管理": ["内部推荐", "内部招聘"],
+                "外包管理": ["人员管理", "供应商管理"],
+                "校园招聘": ["秋季校园招聘"],
+                "雇主品牌运营管理": ["外部舆情监控", "公众号运营"],
+                "校企关系": ["校企合作"],
+            },
+            "KA-HRBP": {
+                "常规招聘交付": ["招聘交付"],
+                "人力成本/人效": ["管控成本/监控人效"],
+                "激励方案": ["激励方案"],
+            },
+            "COE侧重点工作": {
+                "干部盘点": ["干部盘点"],
+            },
+        }
+        for func_name, modules in category_dict.items():
+            func = WorkCategory(level=1, name=func_name)
+            db.add(func)
+            db.flush()
+            for m1_name, m2_list in modules.items():
+                m1 = WorkCategory(level=2, name=m1_name, parent_id=func.id)
+                db.add(m1)
+                db.flush()
+                for m2_name in m2_list:
+                    db.add(WorkCategory(level=3, name=m2_name, parent_id=m1.id))
+
         # 示例工作事项（含累计制）
         sample_items = [
             WorkItem(name="团队周报管理机制搭建", category="年度重点工作", importance="高",
                      owner_id=1, goal_id=6, target_desc="建立高效的工作汇报系统，实现自动化催办和AI辅助审阅",
-                     due_date="2026-12-31"),
+                     due_date="2026-12-31", function="COE侧重点工作", module1="干部盘点", module2="干部盘点"),
             WorkItem(name="招聘数字化工具2.0版本建设", category="年度重点工作", importance="高",
                      owner_id=2, goal_id=5, target_desc="重构招聘底层架构，完成系统2.0上线",
-                     due_date="2026-12-31"),
-            WorkItem(name="招聘制度修订", category="常规工作", importance="中",
-                     owner_id=2, target_desc="完成2026年招聘制度的更新和发布", due_date="2026-10-31"),
-            # 累计制：招聘（Offer数 + 入职数）
+                     due_date="2026-12-31", function="招聘COE", module1="招聘系统管理", module2="招聘系统运营"),
+            WorkItem(name="招聘制度修订", category="日常常规工作", importance="中",
+                     owner_id=2, target_desc="完成2026年招聘制度的更新和发布", due_date="2026-10-31",
+                     function="招聘COE", module1="制度管理", module2="制度更新"),
+            # 累计制：招聘（Offer数 + 入职数）—— 三个板块的招聘交付，module2 相同以便汇报视图聚合
             WorkItem(name="营销板块招聘交付", category="年度重点工作", importance="高",
                      owner_id=3, goal_id=1, target_desc="确保营销板块关键岗位需求达成率不低于90%",
                      due_date="2026-09-30", is_cumulative=1,
-                     cum_metrics='[{"key":"offer","label":"Offer数","unit":"个"},{"key":"onboard","label":"入职数","unit":"人"}]'),
+                     cum_metrics='[{"key":"offer","label":"Offer数","unit":"个"},{"key":"onboard","label":"入职数","unit":"人"}]',
+                     function="KA-HRBP", module1="常规招聘交付", module2="招聘交付"),
             # 累计制：访谈（人次）
-            WorkItem(name="营销板块员工访谈", category="常规工作", importance="中",
+            WorkItem(name="营销板块员工访谈", category="日常常规工作", importance="中",
                      owner_id=3, target_desc="定期进行员工访谈，关注人才动态",
-                     is_cumulative=1, cum_metrics='[{"key":"count","label":"访谈人次","unit":"人次"}]'),
+                     is_cumulative=1, cum_metrics='[{"key":"count","label":"访谈人次","unit":"人次"}]',
+                     function="KA-HRBP", module1="人力成本/人效", module2="管控成本/监控人效"),
             WorkItem(name="产研板块招聘交付", category="年度重点工作", importance="高",
                      owner_id=4, goal_id=1, target_desc="确保产研板块关键岗位需求达成率不低于90%",
                      due_date="2026-09-30", is_cumulative=1,
-                     cum_metrics='[{"key":"offer","label":"Offer数","unit":"个"},{"key":"onboard","label":"入职数","unit":"人"}]'),
-            WorkItem(name="产研任职资格重构", category="自主专项工作", importance="中",
-                     owner_id=4, goal_id=3, target_desc="实现产研侧人才标签化", due_date="2026-10-15"),
+                     cum_metrics='[{"key":"offer","label":"Offer数","unit":"个"},{"key":"onboard","label":"入职数","unit":"人"}]',
+                     function="KA-HRBP", module1="常规招聘交付", module2="招聘交付"),
+            WorkItem(name="产研任职资格重构", category="年度专项工作", importance="中",
+                     owner_id=4, goal_id=3, target_desc="实现产研侧人才标签化", due_date="2026-10-15",
+                     function="KA-HRBP", module1="激励方案", module2="激励方案"),
             WorkItem(name="运营板块招聘交付", category="年度重点工作", importance="高",
                      owner_id=5, goal_id=1, target_desc="确保运营板块关键岗位需求达成率不低于90%",
                      due_date="2026-09-30", is_cumulative=1,
-                     cum_metrics='[{"key":"offer","label":"Offer数","unit":"个"},{"key":"onboard","label":"入职数","unit":"人"}]'),
+                     cum_metrics='[{"key":"offer","label":"Offer数","unit":"个"},{"key":"onboard","label":"入职数","unit":"人"}]',
+                     function="KA-HRBP", module1="常规招聘交付", module2="招聘交付"),
             WorkItem(name="运营板块岗职序列优化", category="年度重点工作", importance="高",
                      owner_id=5, goal_id=3, target_desc="优化运营板块的岗位职级序列，推动阶段性灵活用工",
-                     due_date="2026-10-31"),
+                     due_date="2026-10-31", function="KA-HRBP", module1="激励方案", module2="激励方案"),
         ]
         db.add_all(sample_items)
 

@@ -15,7 +15,10 @@ def get_client():
 
 
 def chat(messages, model=None, temperature=0.4, max_tokens=2000):
-    """通用对话调用，返回文本内容"""
+    """通用对话调用，返回文本内容。
+    若 content 为空（推理型模型思考占用全部 token 导致正式答案被截断），
+    自动用更大 max_tokens 重试一次。
+    """
     client = get_client()
     resp = client.chat.completions.create(
         model=model or config.DEEPSEEK_MODEL,
@@ -24,7 +27,18 @@ def chat(messages, model=None, temperature=0.4, max_tokens=2000):
         max_tokens=max_tokens,
         stream=False,
     )
-    return resp.choices[0].message.content
+    content = resp.choices[0].message.content or ""
+    # 若正式答案为空且被截断，加大 token 重试
+    if not content.strip() and resp.choices[0].finish_reason == "length":
+        resp = client.chat.completions.create(
+            model=model or config.DEEPSEEK_MODEL,
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max(max_tokens * 2, 8000),
+            stream=False,
+        )
+        content = resp.choices[0].message.content or ""
+    return content
 
 
 def chat_json(messages, model=None, temperature=0.2, max_tokens=3000):

@@ -19,6 +19,9 @@ class WorkItemCreate(BaseModel):
     due_date: str = ""
     is_cumulative: int = 0
     cum_metrics: str = "[]"
+    function: str = ""
+    module1: str = ""
+    module2: str = ""
 
 
 class WorkItemUpdate(BaseModel):
@@ -31,6 +34,9 @@ class WorkItemUpdate(BaseModel):
     is_cumulative: Optional[int] = None
     cum_metrics: Optional[str] = None
     status: Optional[str] = None
+    function: Optional[str] = None
+    module1: Optional[str] = None
+    module2: Optional[str] = None
 
 
 @router.get("/items")
@@ -52,6 +58,7 @@ def list_items(user_id: Optional[int] = None, db: Session = Depends(get_db)):
             "due_date": item.due_date,
             "is_cumulative": item.is_cumulative,
             "cum_metrics": json.loads(item.cum_metrics) if item.cum_metrics else [],
+            "function": item.function, "module1": item.module1, "module2": item.module2,
             "created_at": item.created_at.isoformat() if item.created_at else None,
         })
     return result
@@ -64,6 +71,7 @@ def create_item(data: WorkItemCreate, db: Session = Depends(get_db)):
         owner_id=data.owner_id, goal_id=data.goal_id,
         target_desc=data.target_desc, due_date=data.due_date,
         is_cumulative=data.is_cumulative, cum_metrics=data.cum_metrics,
+        function=data.function, module1=data.module1, module2=data.module2,
     )
     db.add(item)
     db.commit()
@@ -94,6 +102,12 @@ def update_item(item_id: int, data: WorkItemUpdate, db: Session = Depends(get_db
         item.cum_metrics = data.cum_metrics
     if data.status is not None:
         item.status = data.status
+    if data.function is not None:
+        item.function = data.function
+    if data.module1 is not None:
+        item.module1 = data.module1
+    if data.module2 is not None:
+        item.module2 = data.module2
     db.commit()
     return {"message": "更新成功"}
 

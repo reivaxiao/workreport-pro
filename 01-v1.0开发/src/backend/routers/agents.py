@@ -1,7 +1,7 @@
 """AI智能体相关API：审阅、信息提炼（累计）、汇报视图聚合、待办、反馈"""
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from models import get_db, WeeklyProgress, WeeklySubmitStatus, WorkItem, User, Annotation, Todo, FeedbackRule, Attachment, WeeklySummary
+from models import get_db, WeeklyProgress, WeeklySubmitStatus, WorkItem, User, Annotation, Todo, FeedbackRule, Attachment, WeeklySummary, AnnualGoal, KeyWorkText
 from datetime import datetime, timedelta
 from pydantic import BaseModel
 from typing import Optional, List
@@ -48,6 +48,14 @@ def compute_status(item: WorkItem) -> str:
     if (due - datetime.now()).days <= 7:
         return "临期"
     return "进行中"
+
+
+_STATUS_RANK = {"延期": 3, "临期": 2, "进行中": 1, "已完成": 0, "暂停": 0, "终止": 0}
+
+
+def worst_status(a: str, b: str) -> str:
+    """返回两个状态中较严重的一个"""
+    return a if _STATUS_RANK.get(a, 0) >= _STATUS_RANK.get(b, 0) else b
 
 
 # ========== 审阅 Agent（DeepSeek 驱动） ==========
@@ -272,7 +280,8 @@ def agent_manager_review(data: ManagerReviewRequest, db: Session = Depends(get_d
     try:
         from agents.deepseek_client import build_manager_review_messages, chat_json
         messages = build_manager_review_messages(summarize_text, members_text)
-        result = chat_json(messages, max_tokens=3000)
+        # max_tokens 需足够大：推理型模型会先占用大量 token 思考，3000 会导致正式答案被截断
+        result = chat_json(messages, max_tokens=8000)
 
         summary = ""
         suggestions = []
@@ -339,6 +348,37 @@ def get_summary(week_start: Optional[str] = None, db: Session = Depends(get_db))
     return {"week_start": week_start, "content": existing.content if existing else ""}
 
 
+# ========== 重点工作汇报文字（管理者修改） ==========
+class KeyWorkTextSave(BaseModel):
+    work_item_id: int
+    week_start: str
+    content: str
+
+
+@router.post("/agent/key-work-text")
+def save_key_work_text(data: KeyWorkTextSave, db: Session = Depends(get_db)):
+    """保存管理者对某个重点工作项的汇报文字（不影响员工原始周报）"""
+    existing = db.query(KeyWorkText).filter(
+        KeyWorkText.work_item_id == data.work_item_id,
+        KeyWorkText.week_start == data.week_start).first()
+    if existing:
+        existing.content = data.content
+    else:
+        db.add(KeyWorkText(work_item_id=data.work_item_id,
+                           week_start=data.week_start, content=data.content))
+    db.commit()
+    return {"message": "已保存"}
+
+
+@router.get("/agent/key-work-texts")
+def list_key_work_texts(week_start: Optional[str] = None, db: Session = Depends(get_db)):
+    """读取某周所有重点工作项的管理者修改文字"""
+    if not week_start:
+        week_start = get_current_week_start()
+    rows = db.query(KeyWorkText).filter(KeyWorkText.week_start == week_start).all()
+    return {r.work_item_id: r.content for r in rows}
+
+
 @router.get("/agent/auto-summary")
 def auto_summary(week_start: Optional[str] = None, db: Session = Depends(get_db)):
     """汇报视图打开时调用：若全员已提交且汇报稿未生成，则自动生成。
@@ -389,43 +429,152 @@ def agent_dashboard(week_start: Optional[str] = None, db: Session = Depends(get_
                 if k in key_metrics:
                     key_metrics[k] += v
 
-    # 2. 重点工作（按目标分组）
-    goals = {}
+    # 2. 重点工作（不绑定组织目标，按二级模块合并成一条整体）
+    key_works = []
+    key_groups = {}
     for item in items:
-        if item.category == "年度重点工作" or item.category == "自主专项工作":
-            gid = item.goal_id or 0
-            if gid not in goals:
-                goal = db.query(WorkItem.goal).first() if False else None
-                goals[gid] = []
+        if item.category in ("年度重点工作", "年度专项工作", "自主专项工作"):
+            m2 = item.module2 or item.name
             cum = calc_cumulative(db, item.id, week_start) if item.is_cumulative else {}
-            goals[gid].append({
-                "id": item.id, "name": item.name, "category": item.category,
-                "importance": item.importance, "owner_name": item.owner.name if item.owner else "",
-                "status": compute_status(item), "due_date": item.due_date,
-                "is_cumulative": item.is_cumulative,
-                "cum_metrics": json.loads(item.cum_metrics) if item.cum_metrics else [],
-                "cum_value": cum,
-            })
+            if m2 not in key_groups:
+                key_groups[m2] = {
+                    "id": item.id, "name": m2, "category": item.category,
+                    "importance": item.importance,
+                    "status": compute_status(item), "due_date": item.due_date,
+                    "is_cumulative": item.is_cumulative,
+                    "cum_metrics": json.loads(item.cum_metrics) if item.cum_metrics else [],
+                    "cum_value": dict(cum),
+                    "owners": [item.owner.name] if item.owner else [],
+                    "members": [{
+                        "id": item.id, "owner_name": item.owner.name if item.owner else "",
+                        "business_line": item.owner.business_line if item.owner else "",
+                        "status": compute_status(item),
+                        "cum_value": cum,
+                        "progress": "",
+                    }],
+                }
+            else:
+                g = key_groups[m2]
+                for k, v in cum.items():
+                    g["cum_value"][k] = g["cum_value"].get(k, 0) + v
+                if item.owner and item.owner.name not in g["owners"]:
+                    g["owners"].append(item.owner.name)
+                g["members"].append({
+                    "id": item.id, "owner_name": item.owner.name if item.owner else "",
+                    "business_line": item.owner.business_line if item.owner else "",
+                    "status": compute_status(item),
+                    "cum_value": cum,
+                    "progress": "",
+                })
+                g["status"] = worst_status(g["status"], compute_status(item))
+    # 补本周进展
+    progresses = db.query(WeeklyProgress).filter(WeeklyProgress.week_start == week_start).all()
+    prog_map = {}
+    for p in progresses:
+        prog_map[p.work_item_id] = p
+    # 查询管理者修改文字 + 附件
+    custom_texts = {r.work_item_id: r.content for r in db.query(KeyWorkText).filter(KeyWorkText.week_start == week_start).all()}
+    all_atts = db.query(Attachment).all()
+    att_map = {}
+    for a in all_atts:
+        att_map.setdefault(a.work_item_id, []).append({
+            "id": a.id, "filename": a.filename,
+            "uploaded_at": a.uploaded_at.isoformat() if a.uploaded_at else None,
+        })
 
-    # 3. 日常工作明细（按人分组）
+    for m2, g in key_groups.items():
+        for mem in g["members"]:
+            p = prog_map.get(mem["id"])
+            if p:
+                mem["progress"] = p.progress or ""
+        # 该重点工作下所有成员 id（合并后可能多个 work_item）
+        member_ids = [mem["id"] for mem in g["members"]]
+        # 管理者修改文字：取第一个有记录的成员
+        custom_text = ""
+        for mid in member_ids:
+            if mid in custom_texts:
+                custom_text = custom_texts[mid]
+                break
+        # 附件：汇总所有成员的附件
+        attachments = []
+        for mid in member_ids:
+            for a in att_map.get(mid, []):
+                attachments.append(a)
+        key_works.append({
+            "id": g["id"], "name": g["name"], "category": g["category"],
+            "importance": g["importance"], "owners": g["owners"],
+            "owner_names": "、".join(g["owners"]),
+            "status": g["status"], "due_date": g["due_date"],
+            "is_cumulative": g["is_cumulative"],
+            "cum_metrics": g["cum_metrics"], "cum_value": g["cum_value"],
+            "members": g["members"],
+            "custom_text": custom_text,
+            "attachments": attachments,
+            "member_ids": member_ids,
+        })
+
+    # 2.5 目标考核（按年度目标分组，汇总所有关联该目标的工作，累计汇总）
+    goal_review = []
+    all_goals = db.query(AnnualGoal).order_by(AnnualGoal.weight.desc()).all()
+    for goal in all_goals:
+        goal_items = [it for it in items if it.goal_id == goal.id]
+        if not goal_items:
+            continue
+        # 聚合该目标下所有工作的累计数据
+        agg_cum = {}
+        work_list = []
+        for it in goal_items:
+            cum = calc_cumulative(db, it.id, week_start) if it.is_cumulative else {}
+            for k, v in cum.items():
+                agg_cum[k] = agg_cum.get(k, 0) + v
+            p = prog_map.get(it.id)
+            work_list.append({
+                "id": it.id, "name": it.name,
+                "owner_name": it.owner.name if it.owner else "",
+                "status": compute_status(it),
+                "is_cumulative": it.is_cumulative,
+                "cum_value": cum,
+                "progress": p.progress if p else "",
+            })
+        goal_review.append({
+            "goal_id": goal.id, "goal_name": goal.name, "weight": goal.weight,
+            "kpis": goal.kpis,
+            "agg_cum": agg_cum,
+            "works": work_list,
+        })
+
+    # 3. 日常工作明细（按 职能 → 一级模块 → 二级模块 → 人 组织）
+    # 先收集本周进展，用于补全字段
+    progresses_all = db.query(WeeklyProgress).filter(WeeklyProgress.week_start == week_start).all()
+    prog_map = {p.work_item_id: p for p in progresses_all}
+
     members = []
     for u in users:
         u_items = [it for it in items if it.owner_id == u.id]
         member_items = []
         for it in u_items:
             cum = calc_cumulative(db, it.id, week_start) if it.is_cumulative else {}
+            p = prog_map.get(it.id)
             member_items.append({
                 "id": it.id, "name": it.name, "category": it.category,
                 "importance": it.importance, "status": compute_status(it),
                 "is_cumulative": it.is_cumulative,
                 "cum_metrics": json.loads(it.cum_metrics) if it.cum_metrics else [],
                 "cum_value": cum,
+                "function": it.function, "module1": it.module1, "module2": it.module2,
+                "target_desc": it.target_desc, "due_date": it.due_date,
+                "progress": p.progress if p else "",
+                "next_plan": p.next_plan if p else "",
+                "blockers": p.blockers if p else "",
             })
         members.append({
             "id": u.id, "name": u.name, "role": u.role,
             "business_line": u.business_line, "avatar_color": u.avatar_color,
             "items": member_items,
         })
+
+    # 3.5 日常明细按 职能→一级模块→二级模块 重排（供前端分组渲染）
+    daily_grouped = group_daily_by_module(members)
 
     # 4. 待办 + 决策
     todos = db.query(Todo).order_by(Todo.created_at.desc()).all()
@@ -446,12 +595,54 @@ def agent_dashboard(week_start: Optional[str] = None, db: Session = Depends(get_
     return {
         "week_start": week_start,
         "key_metrics": key_metrics,
-        "goals": goals,
+        "key_works": key_works,
+        "goal_review": goal_review,
         "members": members,
+        "daily_grouped": daily_grouped,
         "todos": todo_list,
         "decisions": decisions,
         "trend": calc_trend(db, week_start),
     }
+
+
+def group_daily_by_module(members):
+    """把日常明细按 职能 → 一级模块 → 二级模块 → 人 重排。
+    返回 [{function, modules:[{module1, items:[{module2, work_item_name, owner_name, status, ...}]}]}]
+    """
+    # 结构：{职能: {一级模块: {二级模块: [工作项...]}}}
+    tree = {}
+    for m in members:
+        for it in m["items"]:
+            # 只归日常常规工作（重点/专项已在 goals 里）
+            if it["category"] in ("年度重点工作", "年度专项工作", "自主专项工作"):
+                continue
+            func = it.get("function") or "未分类"
+            m1 = it.get("module1") or "未分类"
+            m2 = it.get("module2") or it["name"]
+            tree.setdefault(func, {}).setdefault(m1, {}).setdefault(m2, []).append({
+                "id": it["id"], "work_item_name": it["name"],
+                "owner_name": m["name"], "avatar_color": m["avatar_color"],
+                "status": it["status"], "importance": it["importance"],
+                "cum_value": it["cum_value"], "is_cumulative": it["is_cumulative"],
+                "target_desc": it.get("target_desc", ""),
+                "due_date": it.get("due_date", ""),
+                "progress": it.get("progress", ""),
+                "next_plan": it.get("next_plan", ""),
+                "blockers": it.get("blockers", ""),
+            })
+    result = []
+    for func, modules in tree.items():
+        mod_list = []
+        for m1, m2s in modules.items():
+            item_list = []
+            for m2, works in m2s.items():
+                item_list.append({"module2": m2, "works": works})
+            mod_list.append({"module1": m1, "items": item_list})
+        result.append({"function": func, "modules": mod_list})
+    # 职能排序：招聘COE 在前，KA-HRBP 在后，其余按字母序
+    func_order = {"招聘COE": 0, "KA-HRBP": 1}
+    result.sort(key=lambda x: func_order.get(x["function"], 99))
+    return result
 
 
 def calc_trend(db: Session, week_start: str, weeks: int = 6) -> list:
