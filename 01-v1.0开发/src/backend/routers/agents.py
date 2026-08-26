@@ -297,6 +297,14 @@ def agent_manager_review(data: ManagerReviewRequest, db: Session = Depends(get_d
                         "target": r.get("target", ""),
                         "message": r["message"],
                     })
+        # 自动保存汇报稿（供汇报视图横幅直接读取）
+        if summary:
+            existing = db.query(WeeklySummary).filter(WeeklySummary.week_start == week_start).first()
+            if existing:
+                existing.content = summary
+            else:
+                db.add(WeeklySummary(week_start=week_start, content=summary))
+            db.commit()
         return {"week_start": week_start, "summary": summary,
                 "total": len(suggestions), "suggestions": suggestions}
     except Exception as e:
@@ -329,6 +337,37 @@ def get_summary(week_start: Optional[str] = None, db: Session = Depends(get_db))
         week_start = get_current_week_start()
     existing = db.query(WeeklySummary).filter(WeeklySummary.week_start == week_start).first()
     return {"week_start": week_start, "content": existing.content if existing else ""}
+
+
+@router.get("/agent/auto-summary")
+def auto_summary(week_start: Optional[str] = None, db: Session = Depends(get_db)):
+    """汇报视图打开时调用：若全员已提交且汇报稿未生成，则自动生成。
+    返回 {generated: bool, content: str, all_submitted: bool, not_submitted: [...]}
+    """
+    if not week_start:
+        week_start = get_current_week_start()
+
+    # 检查提交状态
+    status = agent_check_status(week_start, db)
+    all_submitted = status["all_submitted"]
+    not_submitted = status["not_submitted"]
+
+    # 已生成则直接返回
+    existing = db.query(WeeklySummary).filter(WeeklySummary.week_start == week_start).first()
+    if existing and existing.content.strip():
+        return {"generated": False, "content": existing.content,
+                "all_submitted": all_submitted, "not_submitted": not_submitted}
+
+    # 未全员提交则等待
+    if not all_submitted:
+        return {"generated": False, "content": "",
+                "all_submitted": False, "not_submitted": not_submitted}
+
+    # 全员已提交但未生成 → 自动生成
+    req = ManagerReviewRequest(week_start=week_start)
+    result = agent_manager_review(req, db)
+    return {"generated": True, "content": result.get("summary", ""),
+            "all_submitted": True, "not_submitted": []}
 
 
 # ========== 汇报视图聚合 ==========
@@ -411,7 +450,28 @@ def agent_dashboard(week_start: Optional[str] = None, db: Session = Depends(get_
         "members": members,
         "todos": todo_list,
         "decisions": decisions,
+        "trend": calc_trend(db, week_start),
     }
+
+
+def calc_trend(db: Session, week_start: str, weeks: int = 6) -> list:
+    """计算近 N 周的累计指标走势，供趋势图使用。
+    返回 [{week_label, offer, onboard, count, times, people}, ...] 按时间升序。
+    """
+    trend = []
+    for i in range(weeks - 1, -1, -1):
+        ws = (datetime.strptime(week_start, "%Y-%m-%d") - timedelta(days=7 * i)).strftime("%Y-%m-%d")
+        monday = datetime.strptime(ws, "%Y-%m-%d")
+        label = f"{monday.month}/{monday.day}"
+        metrics = {"offer": 0, "onboard": 0, "count": 0, "times": 0, "people": 0}
+        items = db.query(WorkItem).filter(WorkItem.is_cumulative == 1).all()
+        for item in items:
+            cum = calc_cumulative(db, item.id, ws)
+            for k, v in cum.items():
+                if k in metrics:
+                    metrics[k] += v
+        trend.append({"week_label": label, **metrics})
+    return trend
 
 
 # ========== 提交状态（催办 Agent） ==========

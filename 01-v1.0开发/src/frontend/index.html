@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WorkReport HR-Pro · 工作汇报</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
 /* 腾讯体字体 */
 @font-face{
@@ -159,7 +160,53 @@ table.report td textarea:focus{border-color:#7c3aed;outline:none;background:#fff
 @keyframes flashRow{0%{background:#ede9fe}100%{background:transparent}}
 .flash-row{animation:flashRow 1.2s ease}
 
-@media(max-width:760px){.metrics{grid-template-columns:repeat(2,1fr)}.topbar{padding:12px 16px}.container{padding:12px}}
+/* ========== 汇报视图美化 ========== */
+.scene-tabs{display:flex;gap:8px}
+.scene-tab{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:18px;padding:5px 16px;font-size:12px;cursor:pointer;transition:.2s;white-space:nowrap}
+.scene-tab:hover{background:rgba(255,255,255,.25)}
+.scene-tab.active{background:#fff;color:#7c3aed;font-weight:700;border-color:#fff}
+
+.ai-summary{background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #ddd6fe;border-radius:14px;padding:16px 20px;margin-bottom:14px;display:flex;align-items:flex-start;gap:12px}
+.ai-summary .ai-tag{background:#7c3aed;color:#fff;font-size:10px;padding:2px 12px;border-radius:12px;white-space:nowrap;margin-top:2px;font-weight:600}
+.ai-summary .summary-text{font-size:13px;color:#333;line-height:1.7}
+
+.legend{display:flex;gap:12px;flex-wrap:wrap;align-items:center;background:#fff;border-radius:12px;padding:10px 16px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.legend .lg-label{font-size:12px;font-weight:600;color:#555;margin-right:4px}
+.legend .lg-item{display:flex;align-items:center;gap:5px;font-size:12px;color:#555}
+.legend .lg-dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+
+.metric{display:flex;align-items:center;gap:12px}
+.metric .m-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.metric .m-trend{font-size:11px;color:#888;margin-top:2px}
+
+.chart-card{background:#fff;border-radius:14px;padding:16px 20px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:14px}
+.chart-card .chart-title{font-size:13px;font-weight:700;margin-bottom:2px;color:#333}
+.chart-card .chart-src{font-size:11px;color:#999;margin-bottom:10px}
+.chart-box{position:relative;height:200px}
+
+.daily-card{background:#fff;border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.04);overflow:hidden}
+.daily-head{padding:14px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
+.daily-head .left{display:flex;align-items:center;gap:8px}
+.daily-head .title{font-size:14px;font-weight:700}
+.daily-head .sub{font-size:12px;color:#999}
+.daily-arrow{color:#999;font-size:12px}
+.daily-body{padding:0 20px 16px}
+
+.todo-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.todo-card{background:#fff;border-radius:14px;padding:16px 20px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.t-title{font-size:14px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.t-sub{font-size:11px;color:#999;margin-bottom:10px}
+
+.dash-actions{display:flex;gap:8px;align-items:center}
+
+.ann-mini{font-size:11px;color:#6d28d9;background:none;border:1px dashed #c4b5fd;border-radius:6px;padding:2px 8px;cursor:pointer;margin-left:auto}
+.ann-mini:hover{background:#f5f3ff}
+
+.ann-inline{padding:10px 14px;background:#faf8ff;border:1px solid #ede9fe;border-radius:10px;margin:0 0 6px}
+.ann-inline-ta{width:100%;min-height:70px;border:1px solid #ddd;border-radius:8px;padding:9px 11px;font-size:13px;font-family:inherit;resize:vertical}
+.ann-inline-result{font-size:12px;color:#16a34a;margin-top:8px}
+
+@media(max-width:760px){.metrics{grid-template-columns:repeat(2,1fr)}.topbar{padding:12px 16px}.container{padding:12px}.todo-grid{grid-template-columns:1fr}.scene-tabs{flex-wrap:wrap}}
 </style>
 </head>
 <body>
@@ -247,14 +294,31 @@ table.report td textarea:focus{border-color:#7c3aed;outline:none;background:#fff
   <div id="page-dashboard" class="hidden">
     <div class="card" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
       <h2 style="margin:0">管理者汇报视图 <span style="font-size:12px;color:#888;font-weight:400" id="dashWeekLabel"></span></h2>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-outline btn-sm" id="btnMgrReview" onclick="managerReview()">一键 AI 审阅</button>
-        <button class="btn btn-outline btn-sm" onclick="showAnnotate()">＋ 写批注</button>
-      </div>
+      <button class="btn btn-outline btn-sm" id="btnGenSummary" onclick="generateSummary()">一键 AI 总结</button>
     </div>
-    <div class="card hidden" id="mgrReviewPanel"></div>
-    <div class="card hidden" id="annotatePanel"></div>
+
+    <!-- AI 总结横幅 -->
+    <div class="ai-summary hidden" id="dashSummary">
+      <span class="ai-tag">AI 总结</span>
+      <div class="summary-text" id="dashSummaryText"></div>
+    </div>
+
+    <!-- 状态图例 -->
+    <div class="legend">
+      <span class="lg-label">状态图例：</span>
+      <span class="lg-item"><span class="lg-dot" style="background:#16a34a"></span>已完成</span>
+      <span class="lg-item"><span class="lg-dot" style="background:#2563eb"></span>进行中</span>
+      <span class="lg-item"><span class="lg-dot" style="background:#eab308"></span>临期</span>
+      <span class="lg-item"><span class="lg-dot" style="background:#f97316"></span>延期</span>
+      <span class="lg-item"><span class="lg-dot" style="background:#ef4444"></span>暂停/终止</span>
+    </div>
+
     <div class="metrics" id="dashMetrics"></div>
+    <div class="chart-card" id="dashChartCard">
+      <div class="chart-title">近6周关键数据趋势</div>
+      <div class="chart-src">数据来源：每周累计自动汇总</div>
+      <div class="chart-box"><canvas id="chartTrend"></canvas></div>
+    </div>
     <div id="dashContent"></div>
   </div>
 </div>
@@ -521,152 +585,226 @@ async function addItem(){
 }
 
 // ========== 汇报视图 ==========
+let dashData = null;       // 缓存的汇报数据
+let trendChart = null;     // 趋势图实例
+
 async function loadDashboard(){
   document.getElementById('dashWeekLabel').textContent = `本周: ${WEEK_START}`;
-  const d = await (await fetch(`/api/agent/dashboard?week_start=${WEEK_START}`)).json();
-  const km = d.key_metrics;
+  dashData = await (await fetch(`/api/agent/dashboard?week_start=${WEEK_START}`)).json();
+  const km = dashData.key_metrics;
+
+  // 1. 关键数据卡片（带图标）
   const metrics = [
-    {label:'累计入职', value:km.onboard||0, color:'#16a34a'},
-    {label:'累计 Offer', value:km.offer||0, color:'#2563eb'},
-    {label:'累计访谈人次', value:km.count||0, color:'#7c3aed'},
-    {label:'进行中事项', value:d.members.reduce((s,m)=>s+m.items.length,0), color:'#f97316'},
+    {label:'累计入职', value:km.onboard||0, icon:'👥', bg:'#dcfce7', color:'#16a34a'},
+    {label:'累计 Offer', value:km.offer||0, icon:'📄', bg:'#dbeafe', color:'#2563eb'},
+    {label:'累计访谈人次', value:km.count||0, icon:'💬', bg:'#ede9fe', color:'#7c3aed'},
+    {label:'进行中事项', value:dashData.members.reduce((s,m)=>s+m.items.length,0), icon:'📋', bg:'#ffedd5', color:'#f97316'},
   ];
-  document.getElementById('dashMetrics').innerHTML = metrics.map(m=>`<div class="metric"><div class="m-label">${m.label}</div><div class="m-value" style="color:${m.color}">${m.value}</div></div>`).join('');
+  document.getElementById('dashMetrics').innerHTML = metrics.map(m=>`
+    <div class="metric">
+      <div class="m-icon" style="background:${m.bg}">${m.icon}</div>
+      <div><div class="m-label">${m.label}</div><div class="m-value" style="color:${m.color}">${m.value}</div></div>
+    </div>`).join('');
 
-  let html = '<div class="section-title"><span class="bar"></span>重点工作项目</div>';
-  const goalNames = {};
-  allGoals.forEach(g=>goalNames[g.id]=g.name);
-  Object.entries(d.goals).forEach(([gid, items])=>{
-    const gname = goalNames[gid] || '未挂目标';
-    html += `<div class="goal-block"><div class="goal-head">${gname}</div>`;
-    items.forEach(it=>{
-      const cumTxt = it.is_cumulative && it.cum_value ? Object.entries(it.cum_value).map(([k,v])=>`${k}:${v}`).join(' ') : '';
-      html += `<div class="key-item"><span class="ki-name">${it.name}</span>${impTag(it.importance)}${stBadge(it.status)}<span style="font-size:11px;color:#888">${it.owner_name}${it.due_date?' · 截止'+it.due_date:''}</span>${cumTxt?`<span class="ki-cum">${cumTxt}</span>`:''}</div>`;
-    });
-    html += '</div>';
-  });
+  // AI 总结横幅（自动生成或读取）
+  await loadSummaryBanner();
 
-  html += '<div class="section-title"><span class="bar"></span>日常工作明细</div>';
-  d.members.forEach(m=>{
-    html += `<div class="member-group"><div class="member-head"><span class="m-avatar" style="background:${m.avatar_color}">${m.name[0]}</span>${m.name} · ${m.business_line||m.role}</div>`;
-    m.items.forEach(it=>{
-      const cumTxt = it.is_cumulative && it.cum_value ? Object.entries(it.cum_value).map(([k,v])=>`${k}:${v}`).join(' ') : '';
-      html += `<div class="key-item"><span class="ki-name">${it.name}</span>${catTag(it.category)}${stBadge(it.status)}${cumTxt?`<span class="ki-cum">${cumTxt}</span>`:''}</div>`;
-    });
-    html += '</div>';
-  });
+  // 2. 趋势图
+  drawTrend(dashData.trend);
 
-  if(d.decisions.length){
-    html += '<div class="section-title"><span class="bar"></span>需关注/决策事项</div>';
-    d.decisions.forEach(x=>{ html += `<div class="todo-item"><span class="dot" style="background:#ef4444"></span><div><b>${x.work_item_name}</b>：${x.content}</div></div>`; });
-  }
-
-  document.getElementById('dashContent').innerHTML = html;
+  // 3. 内容区（重点 + 日常 + 待办决策）
+  renderDashContent();
 }
 
-// ========== 管理者一键 AI 审阅 ==========
-const MGR_TYPE_STYLE = {风险:'#ef4444',进度:'#f97316',亮点:'#16a34a',遗漏:'#ca8a04'};
+async function loadSummaryBanner(){
+  const banner = document.getElementById('dashSummary');
+  const text = document.getElementById('dashSummaryText');
+  try{
+    // 只读取已保存的汇报稿；没有则隐藏横幅，等管理者点"一键AI总结"
+    const r = await (await fetch(`/api/agent/get-summary?week_start=${WEEK_START}`)).json();
+    if(r.content && r.content.trim()){
+      banner.classList.remove('hidden');
+      text.innerHTML = r.content.replace(/\n/g,'<br>');
+    } else {
+      banner.classList.add('hidden');
+    }
+  }catch(e){
+    banner.classList.add('hidden');
+  }
+}
 
-async function managerReview(){
-  const btn = document.getElementById('btnMgrReview');
+async function generateSummary(){
+  const btn = document.getElementById('btnGenSummary');
   if(btn.classList.contains('loading')) return;
   btn.classList.add('loading');
-  btn.innerHTML = '<span class="spinner"></span>AI 审阅中…';
+  btn.innerHTML = '<span class="spinner"></span>AI 总结中…';
 
-  const panel = document.getElementById('mgrReviewPanel');
-  panel.classList.remove('hidden');
-  panel.innerHTML = '<div class="ai-notice"><span class="spinner"></span><span>AI 正在审阅全员周报，请稍候…</span></div>';
+  const banner = document.getElementById('dashSummary');
+  const text = document.getElementById('dashSummaryText');
+  banner.classList.remove('hidden');
+  text.innerHTML = '<span style="color:#888">AI 正在汇总提炼现有材料，请稍候…</span>';
 
   try{
     const data = await (await fetch('/api/agent/manager-review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({week_start:WEEK_START})})).json();
     btn.classList.remove('loading');
-    btn.innerHTML = '一键 AI 审阅';
-
-    // 1. 汇报稿（可编辑）
-    const summaryHtml = data.summary
-      ? `<div class="ai-bubble" style="border-color:#c4b5fd">
-          <div class="b-head"><span class="b-type">向上汇报稿</span><span style="color:#aaa;font-weight:400">可编辑，改完点保存</span></div>
-          <textarea id="summaryEditor" style="width:100%;min-height:180px;border:1px solid #ddd;border-radius:8px;padding:12px;font-size:13px;font-family:inherit;line-height:1.8;resize:vertical">${data.summary}</textarea>
-          <div class="b-actions">
-            <button class="btn btn-primary btn-sm" onclick="saveSummary()">保存汇报稿</button>
-          </div>
-        </div>`
-      : '';
-
-    // 2. 审阅意见
-    let suggestionsHtml = '';
-    if(!data.suggestions.length){
-      suggestionsHtml = '<div class="ai-bubble" style="text-align:center"><div style="color:#16a34a;font-weight:700">✓ 团队周报整体正常</div><div style="font-size:12px;color:#888;margin-top:4px">未发现明显风险或异常。</div></div>';
+    btn.innerHTML = '一键 AI 总结';
+    if(data.summary){
+      text.innerHTML = data.summary.replace(/\n/g,'<br>');
     } else {
-      const typeLabels = {风险:'风险',进度:'进度',亮点:'亮点',遗漏:'遗漏'};
-      suggestionsHtml = '<h2 style="font-size:15px;margin:14px 0 12px">AI 审阅意见（'+data.total+'条）</h2>' + data.suggestions.map((s, i)=>{
-        const color = MGR_TYPE_STYLE[s.type] || '#7c3aed';
-        return `<div class="ai-bubble" style="margin-bottom:10px">
-          <div class="b-head"><span class="b-type" style="background:${color}22;color:${color}">${typeLabels[s.type]||s.type}</span><span>${s.target||''}</span></div>
-          <div class="b-item">${s.message}</div>
-          <div class="b-actions">
-            <button class="btn btn-sm" style="background:#16a34a;color:#fff" onclick="feedbackRule(${i},'认可')">👍 认可</button>
-            <button class="btn btn-sm" style="background:#f0f0f0;color:#666" onclick="feedbackRule(${i},'纠正')">👎 纠正</button>
-          </div>
-        </div>`;
-      }).join('');
+      text.innerHTML = '<span style="color:#888">暂无可汇总的材料。</span>';
     }
-    panel.innerHTML = summaryHtml + suggestionsHtml;
-    // 存当前审阅结果供认可/纠正使用
-    window._reviewResult = data.suggestions;
   }catch(e){
     btn.classList.remove('loading');
-    btn.innerHTML = '一键 AI 审阅';
-    panel.innerHTML = '<div class="ai-notice" style="border-color:#fca5a5;color:#dc2626">AI 审阅失败，请稍后重试。</div>';
+    btn.innerHTML = '一键 AI 总结';
+    text.innerHTML = '<span style="color:#dc2626">AI 总结失败，请稍后重试。</span>';
   }
 }
 
-async function saveSummary(){
-  const content = document.getElementById('summaryEditor').value;
-  await fetch('/api/agent/save-summary',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({week_start:WEEK_START, content})});
-  alert('汇报稿已保存');
+function drawTrend(trend){
+  const canvas = document.getElementById('chartTrend');
+  if(!canvas || !window.Chart) return;
+  const labels = (trend||[]).map(t=>t.week_label);
+  const datasets = [
+    {key:'onboard', label:'入职', color:'#16a34a'},
+    {key:'offer', label:'Offer', color:'#2563eb'},
+    {key:'count', label:'访谈人次', color:'#7c3aed'},
+  ];
+  if(trendChart){ trendChart.destroy(); }
+  trendChart = new Chart(canvas, {
+    type:'line',
+    data:{
+      labels,
+      datasets: datasets.map(d=>({
+        label:d.label, data:(trend||[]).map(t=>t[d.key]||0),
+        borderColor:d.color, backgroundColor:d.color+'18', fill:false,
+        tension:0.35, pointRadius:3, pointBackgroundColor:d.color,
+      }))
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'top', labels:{boxWidth:12,font:{size:10}} } },
+      scales:{ y:{ beginAtZero:true, ticks:{precision:0} } }
+    }
+  });
 }
 
-async function feedbackRule(index, source){
-  const s = window._reviewResult && window._reviewResult[index];
-  if(!s) return;
-  if(source === '纠正'){
-    const note = prompt('请写下正确的审阅方向（会沉淀给 AI 学习）：', s.message);
-    if(!note) return;
-    await fetch('/api/agent/feedback-rules',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:note, source:'纠正', agent:'审阅Agent'})});
-    alert('已记录纠正，AI 下次会参考');
-  } else {
-    await fetch('/api/agent/feedback-rules',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:s.message, source:'认可', agent:'审阅Agent'})});
-    alert('已记录认可');
+function renderDashContent(){
+  const html = [];
+  const goalNames = {};
+  allGoals.forEach(g=>goalNames[g.id]=g.name);
+
+  // 重点工作（按目标分组，每个事项带批注按钮）
+  const keyItems = [];
+  Object.entries(dashData.goals).forEach(([gid, items])=>{
+    items.forEach(it=>keyItems.push({...it, goalName: goalNames[gid]||'未挂目标'}));
+  });
+  if(keyItems.length){
+    html.push('<div class="section-title"><span class="bar"></span>重点工作项目</div>');
+    Object.entries(dashData.goals).forEach(([gid, items])=>{
+      const gn = goalNames[gid]||'未挂目标';
+      html.push(`<div class="goal-block"><div class="goal-head">${gn}</div>`);
+      items.forEach(it=>{
+        const cumTxt = it.is_cumulative && it.cum_value ? Object.entries(it.cum_value).map(([k,v])=>`${k}:${v}`).join(' ') : '';
+        html.push(`<div class="key-item" data-item-id="${it.id}" data-item-name="${it.name}"><span class="ki-name">${it.name}</span>${impTag(it.importance)}${stBadge(it.status)}<span style="font-size:11px;color:#888">${it.owner_name}${it.due_date?' · 截止'+it.due_date:''}</span>${cumTxt?`<span class="ki-cum">${cumTxt}</span>`:''}<button class="ann-mini" onclick="toggleAnnotate(this)">✎ 批注</button></div>`);
+      });
+      html.push('</div>');
+    });
   }
+
+  // 日常工作明细（默认收起，按人分组，每个事项带批注）
+  const dailyItems = [];
+  dashData.members.forEach(m=>{
+    m.items.forEach(it=>dailyItems.push({...it, owner_name:m.name, avatar:m.avatar_color, business_line:m.business_line}));
+  });
+  if(dailyItems.length){
+    html.push('<div class="section-title"><span class="bar"></span>日常工作明细</div>');
+    html.push(`<div class="daily-card">
+      <div class="daily-head" onclick="toggleDaily()">
+        <div class="left"><span class="title">全员日常工作明细</span><span class="sub">${dashData.members.length}人 · 按人分组</span></div>
+        <span class="daily-arrow" id="dailyArrow">▼ 展开</span>
+      </div>
+      <div class="daily-body hidden" id="dailyBody">`);
+    dashData.members.forEach(m=>{
+      html.push(`<div class="member-group"><div class="member-head"><span class="m-avatar" style="background:${m.avatar_color}">${m.name[0]}</span>${m.name} · ${m.business_line||m.role}</div>`);
+      m.items.forEach(it=>{
+        const cumTxt = it.is_cumulative && it.cum_value ? Object.entries(it.cum_value).map(([k,v])=>`${k}:${v}`).join(' ') : '';
+        html.push(`<div class="key-item" data-item-id="${it.id}" data-item-name="${it.name}"><span class="ki-name">${it.name}</span>${catTag(it.category)}${stBadge(it.status)}${cumTxt?`<span class="ki-cum">${cumTxt}</span>`:''}<button class="ann-mini" onclick="toggleAnnotate(this)">✎ 批注</button></div>`);
+      });
+      html.push('</div>');
+    });
+    html.push('</div></div>');
+  }
+
+  // 待办 + 决策
+  const todos = dashData.todos || [];
+  const decisions = dashData.decisions || [];
+  if(todos.length || decisions.length){
+    html.push('<div class="section-title"><span class="bar"></span>待办事宜与决策事项</div>');
+    html.push('<div class="todo-grid">');
+    html.push('<div class="todo-card"><div class="t-title">📋 下阶段待办</div><div class="t-sub">未完成自动顺延</div>');
+    if(todos.length){
+      todos.forEach(t=>{
+        const stCls = t.status==='已完成'?'bg:#16a34a':(t.status==='已逾期'?'bg:#f97316':'bg:#7c3aed');
+        html.push(`<div class="todo-item"><span class="dot" style="${stCls}"></span><span class="t-content">${t.content}</span></div>`);
+      });
+    } else { html.push('<div style="font-size:12px;color:#999">暂无待办</div>'); }
+    html.push('</div>');
+    html.push('<div class="todo-card"><div class="t-title">⚡ 需关注/决策事项</div><div class="t-sub">周例会共识</div>');
+    if(decisions.length){
+      decisions.forEach(x=>{ html.push(`<div class="todo-item"><span class="dot" style="background:#ef4444"></span><div class="t-content"><b>${x.work_item_name}</b>：${x.content}</div></div>`); });
+    } else { html.push('<div style="font-size:12px;color:#999">暂无</div>'); }
+    html.push('</div></div>');
+  }
+
+  document.getElementById('dashContent').innerHTML = html.join('');
 }
 
-// ========== 管理者写批注 ==========
-function showAnnotate(){
-  const panel = document.getElementById('annotatePanel');
-  panel.classList.remove('hidden');
-  panel.innerHTML = `
-    <h2 style="font-size:15px;margin-bottom:12px">写批注（反馈给员工）</h2>
-    <textarea id="annContent" style="width:100%;min-height:90px;border:1px solid #ddd;border-radius:8px;padding:10px;font-size:13px;font-family:inherit;resize:vertical" placeholder="例如：员工访谈数量不够，后续需加强。或：李微微应增加访谈员工数量。点名则只发给对应员工，不点名则全员可见"></textarea>
-    <div style="display:flex;gap:8px;margin-top:12px">
-      <button class="btn btn-primary btn-sm" onclick="submitAnnotation()">发布批注</button>
-      <button class="btn btn-gray btn-sm" onclick="document.getElementById('annotatePanel').classList.add('hidden')">取消</button>
+function toggleDaily(){
+  const body = document.getElementById('dailyBody');
+  const arrow = document.getElementById('dailyArrow');
+  if(!body) return;
+  body.classList.toggle('hidden');
+  arrow.textContent = body.classList.contains('hidden') ? '▼ 展开' : '▲ 收起';
+}
+
+// ========== 管理者写批注（就地展开） ==========
+function toggleAnnotate(btn){
+  const row = btn.closest('.key-item');
+  const itemId = row.dataset.itemId;
+  const itemName = row.dataset.itemName || '';
+  // 如果已展开，收起
+  const existing = row.nextElementSibling;
+  if(existing && existing.classList.contains('ann-inline')){
+    existing.remove();
+    return;
+  }
+  // 否则在行下方就地插入批注框
+  const box = document.createElement('div');
+  box.className = 'ann-inline';
+  box.innerHTML = `
+    <textarea class="ann-inline-ta" placeholder="针对「${itemName}」的反馈。若点他人姓名，则只发给对应员工">${''}</textarea>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn btn-primary btn-sm" onclick="submitInlineAnnotation(this, ${itemId})">发布批注</button>
+      <button class="btn btn-gray btn-sm" onclick="this.closest('.ann-inline').remove()">取消</button>
     </div>
-    <div id="annResult" style="margin-top:10px;font-size:12px;color:#16a34a"></div>`;
+    <div class="ann-inline-result"></div>`;
+  row.insertAdjacentElement('afterend', box);
+  box.querySelector('textarea').focus();
 }
 
-async function submitAnnotation(){
-  const content = document.getElementById('annContent').value.trim();
+async function submitInlineAnnotation(btn, itemId){
+  const box = btn.closest('.ann-inline');
+  const content = box.querySelector('.ann-inline-ta').value.trim();
   if(!content){ alert('请填写批注内容'); return; }
-  const r = await fetch('/api/annotations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({manager_id:currentUser.id, week_start:WEEK_START, content})});
+  const r = await fetch('/api/annotations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({manager_id:currentUser.id, week_start:WEEK_START, work_item_id:itemId, content})});
   const res = await r.json();
-  const result = document.getElementById('annResult');
+  const result = box.querySelector('.ann-inline-result');
   if(res.target_user_name){
-    result.textContent = '✓ 批注已发布，点名反馈给：'+res.target_user_name;
+    result.textContent = '✓ 已发布，点名反馈给：'+res.target_user_name;
   } else {
-    result.textContent = '✓ 批注已发布（未点名，全员可见）';
+    result.textContent = '✓ 已发布（未点名，参与该工作的人可见）';
   }
-  document.getElementById('annContent').value = '';
+  setTimeout(()=>box.remove(), 1500);
 }
 
 // ========== 员工端：查看管理者反馈 ==========
