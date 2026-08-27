@@ -179,7 +179,53 @@ def submit_week(user_id: int, data: WeekSubmit, week_start: Optional[str] = None
         db.add(WeeklySubmitStatus(user_id=user_id, week_start=week_start, status="submitted", submitted_at=datetime.now()))
 
     db.commit()
+
+    # 提交后触发 AI 提取该员工的待办（失败不影响提交）
+    try:
+        extract_user_todos(db, user_id, week_start)
+    except Exception:
+        pass
+
     return {"message": "提交成功", "week_start": week_start}
+
+
+def extract_user_todos(db: Session, user_id: int, week_start: str):
+    """AI 从某员工本周周报的「下阶段计划」提取待办（幂等）"""
+    from models import Todo
+    from agents.deepseek_client import build_todo_extract_messages, chat_json
+
+    existing = db.query(Todo).filter(Todo.week_start == week_start, Todo.owner_id == user_id).first()
+    if existing:
+        return
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        return
+    items = db.query(WorkItem).filter(WorkItem.owner_id == user_id).all()
+    next_plans = []
+    for it in items:
+        prog = db.query(WeeklyProgress).filter(
+            WeeklyProgress.work_item_id == it.id,
+            WeeklyProgress.week_start == week_start).first()
+        if prog and prog.next_plan and prog.next_plan.strip():
+            next_plans.append({"item_name": it.name, "next_plan": prog.next_plan})
+    if not next_plans:
+        return
+
+    try:
+        messages = build_todo_extract_messages(user.name, next_plans)
+        result = chat_json(messages, max_tokens=2000)
+    except Exception:
+        return
+
+    if isinstance(result, list):
+        for r in result:
+            if isinstance(r, dict) and r.get("content"):
+                db.add(Todo(content=r["content"].strip(), owner_id=user_id,
+                            work_item_name=r.get("work_item_name", "") or "",
+                            due_date=r.get("due_date", "") or "",
+                            week_start=week_start, status="进行中"))
+        db.commit()
 
 
 @router.post("/reports/save-draft")

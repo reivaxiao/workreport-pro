@@ -693,10 +693,24 @@ class TodoCreate(BaseModel):
 
 
 @router.get("/agent/todos")
-def list_todos(db: Session = Depends(get_db)):
-    todos = db.query(Todo).order_by(Todo.created_at.desc()).all()
-    return [{"id": t.id, "content": t.content, "owner_id": t.owner_id,
-             "due_date": t.due_date, "status": t.status, "week_start": t.week_start} for t in todos]
+def list_todos(week_start: Optional[str] = None, status: Optional[str] = None, db: Session = Depends(get_db)):
+    """列出待办，可按周、按状态过滤"""
+    query = db.query(Todo)
+    if week_start:
+        query = query.filter(Todo.week_start == week_start)
+    if status:
+        query = query.filter(Todo.status == status)
+    todos = query.order_by(Todo.created_at.asc()).all()
+    result = []
+    for t in todos:
+        owner = db.query(User).filter(User.id == t.owner_id).first()
+        result.append({
+            "id": t.id, "content": t.content, "owner_id": t.owner_id,
+            "owner_name": owner.name if owner else "",
+            "work_item_name": t.work_item_name or "",
+            "due_date": t.due_date, "status": t.status, "week_start": t.week_start,
+        })
+    return result
 
 
 @router.post("/agent/todos")
@@ -709,14 +723,85 @@ def create_todo(data: TodoCreate, db: Session = Depends(get_db)):
     return {"id": todo.id, "message": "待办已创建"}
 
 
-@router.put("/agent/todos/{todo_id}/status")
-def update_todo_status(todo_id: int, status: str, db: Session = Depends(get_db)):
+# ========== 待办 Agent：AI 提取 + 回溯确认 ==========
+class TodoExtractRequest(BaseModel):
+    week_start: str
+
+
+@router.post("/agent/extract-todos")
+def extract_todos(data: TodoExtractRequest, db: Session = Depends(get_db)):
+    """AI 从全员本周周报的「下阶段计划」提取待办，存入待办池。
+    仅提取本周、当前没有待办的人员（幂等：已提取过的不重复提取）。"""
+    week_start = data.week_start
+    users = db.query(User).all()
+    items = db.query(WorkItem).all()
+
+    from agents.deepseek_client import build_todo_extract_messages, chat_json
+
+    created_count = 0
+    for u in users:
+        # 该员工本周已提取过则跳过
+        existing = db.query(Todo).filter(Todo.week_start == week_start, Todo.owner_id == u.id).first()
+        if existing:
+            continue
+        # 收集该员工本周所有事项的「下阶段计划」
+        u_items = [it for it in items if it.owner_id == u.id]
+        next_plans = []
+        for it in u_items:
+            prog = db.query(WeeklyProgress).filter(
+                WeeklyProgress.work_item_id == it.id,
+                WeeklyProgress.week_start == week_start).first()
+            plan = prog.next_plan if prog else ""
+            if plan and plan.strip():
+                next_plans.append({"item_name": it.name, "next_plan": plan})
+        if not next_plans:
+            continue
+
+        try:
+            messages = build_todo_extract_messages(u.name, next_plans)
+            result = chat_json(messages, max_tokens=2000)
+        except Exception:
+            result = None
+
+        if isinstance(result, list):
+            for r in result:
+                if isinstance(r, dict) and r.get("content"):
+                    db.add(Todo(content=r["content"].strip(), owner_id=u.id,
+                                work_item_name=r.get("work_item_name", "") or "",
+                                due_date=r.get("due_date", "") or "",
+                                week_start=week_start, status="进行中"))
+                    created_count += 1
+    db.commit()
+    return {"message": f"已提取 {created_count} 条待办", "created": created_count}
+
+
+class TodoReviewAction(BaseModel):
+    action: str  # done=已完成 cancel=已取消 postpone=未完成顺延
+
+
+@router.post("/agent/todos/{todo_id}/review")
+def review_todo(todo_id: int, data: TodoReviewAction, week_start: Optional[str] = None, db: Session = Depends(get_db)):
+    """管理者在周会回溯时对上周待办做处理：
+    - done：标记已完成
+    - cancel：标记已取消
+    - postpone：未完成，自动顺延到本周（复制一条到本周，原条目标记已完成）"""
+    if not week_start:
+        week_start = get_current_week_start()
     todo = db.query(Todo).filter(Todo.id == todo_id).first()
     if not todo:
         return {"error": "待办不存在"}
-    todo.status = status
+
+    if data.action == "done":
+        todo.status = "已完成"
+    elif data.action == "cancel":
+        todo.status = "已取消"
+    elif data.action == "postpone":
+        # 顺延：原条目标记已完成，复制一条到本周
+        todo.status = "已完成"
+        db.add(Todo(content=todo.content, owner_id=todo.owner_id,
+                    due_date=todo.due_date, week_start=week_start, status="进行中"))
     db.commit()
-    return {"message": "状态已更新"}
+    return {"message": "已处理"}
 
 
 # ========== 反馈规则库（Agent进化） ==========

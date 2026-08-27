@@ -10,136 +10,152 @@
 @font-face{
   font-family:'TencentSans';
   src:url('/static/fonts/TencentSans-Medium.ttf') format('truetype');
-  font-weight:400 700;
+  font-weight:normal;
+  font-style:normal;
   font-display:swap;
 }
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'TencentSans',-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#f4f5f7;color:#333;line-height:1.6}
+body{font-family:'TencentSans',-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#f2f4f8;color:#333;line-height:1.6}
 
-.topbar{background:linear-gradient(135deg,#5b21b6,#7c3aed,#a855f7);color:#fff;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
-.topbar .logo{font-size:17px;font-weight:700}
-.topbar .user{font-size:13px;opacity:.95;display:flex;align-items:center;gap:8px}
-.topbar .user .avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;background:rgba(255,255,255,.2)}
+.topbar{background:linear-gradient(135deg,#14213d,#1d2f52,#2a4070);color:#fff;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.topbar .logo{font-size:18px;font-weight:700}
+.topbar .user{font-size:14px;opacity:.95;display:flex;align-items:center;gap:8px;cursor:pointer;position:relative;padding:4px 8px;border-radius:8px}
+.topbar .user:hover{background:rgba(255,255,255,.12)}
+.topbar .user .avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700;background:rgba(255,255,255,.2)}
+.topbar .user .caret{font-size:11px;opacity:.7}
+.user-menu{position:absolute;top:calc(100% + 8px);right:0;background:#fff;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.15);min-width:140px;padding:6px;z-index:200}
+.user-menu .menu-item{display:block;width:100%;text-align:left;background:none;border:none;padding:9px 14px;font-size:14px;color:#333;border-radius:6px;cursor:pointer;font-family:inherit}
+.user-menu .menu-item:hover{background:#f2f4f8}
 
 .container{max-width:1280px;margin:0 auto;padding:16px}
 
 .role-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;padding:20px 0}
 .role-card{background:#fff;border:2px solid #eee;border-radius:12px;padding:20px;cursor:pointer;text-align:center;transition:.2s}
-.role-card:hover{border-color:#7c3aed;background:#faf8ff}
-.role-card .avatar{width:46px;height:46px;border-radius:50%;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;font-weight:700}
-.role-card .name{font-size:15px;font-weight:700}
-.role-card .info{font-size:11px;color:#888;margin-top:2px}
+.role-card:hover{border-color:#1d2f52;background:#f5f7fb}
+.role-card .avatar{width:46px;height:46px;border-radius:50%;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:21px;font-weight:700}
+.role-card .name{font-size:16px;font-weight:700}
+.role-card .info{font-size:12px;color:#888;margin-top:2px}
 
 .nav{display:flex;gap:8px;margin:14px 0;flex-wrap:wrap}
-.nav-btn{padding:7px 18px;border-radius:18px;border:1px solid #e0e0e0;background:#fff;font-size:13px;cursor:pointer;color:#555;transition:.2s}
-.nav-btn.active{background:#7c3aed;color:#fff;border-color:#7c3aed}
+.nav-btn{padding:7px 18px;border-radius:18px;border:1px solid #e0e0e0;background:#fff;font-size:14px;cursor:pointer;color:#555;transition:.2s}
+.nav-btn.active{background:#1d2f52;color:#fff;border-color:#1d2f52}
 
 .card{background:#fff;border-radius:14px;padding:18px 22px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
-.card h2{font-size:15px;font-weight:700;margin-bottom:14px;color:#1a1a1a}
+.card h2{font-size:16px;font-weight:700;margin-bottom:14px;color:#1a1a1a}
 
-.st{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:8px;white-space:nowrap}
+.st{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:2px 8px;border-radius:8px;white-space:nowrap}
 .st-done{background:#dcfce7;color:#16a34a}
 .st-doing{background:#dbeafe;color:#2563eb}
 .st-warn{background:#fef9c3;color:#ca8a04}
 .st-delay{background:#ffedd5;color:#ea580c}
 .st-stop{background:#fee2e2;color:#dc2626}
 
-.tag{font-size:10px;padding:2px 7px;border-radius:7px;font-weight:600;white-space:nowrap}
+.tag{font-size:11px;padding:2px 7px;border-radius:7px;font-weight:600;white-space:nowrap}
 .tag-high{background:#fee2e2;color:#dc2626}
 .tag-mid{background:#fef3c7;color:#b45309}
 .tag-low{background:#f1f5f9;color:#64748b}
-.tag-cat-key{background:#ede9fe;color:#6d28d9}
+.tag-cat-key{background:#e6edf7;color:#14213d}
 .tag-cat-self{background:#dbeafe;color:#1d4ed8}
 .tag-cat-normal{background:#f1f5f9;color:#64748b}
-.tag-cum{background:#ede9fe;color:#6d28d9}
+.tag-cum{background:#e6edf7;color:#14213d}
 
 /* 表格形式周报 */
 .table-wrap{overflow-x:auto;background:#fff;border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
 table.report{width:100%;border-collapse:collapse;min-width:1200px}
-table.report th{background:#f7f5ff;color:#6d28d9;font-size:12px;font-weight:700;padding:12px 12px;text-align:left;border-bottom:2px solid #ede9fe;white-space:nowrap;position:sticky;top:0}
-table.report td{padding:12px;border-bottom:1px solid #f0f0f0;font-size:13px;vertical-align:top}
-table.report tr:hover td{background:#faf9ff}
+table.report th{background:#eef2f8;color:#14213d;font-size:13px;font-weight:700;padding:12px 12px;text-align:left;border-bottom:2px solid #e6edf7;white-space:nowrap;position:sticky;top:0}
+table.report td{padding:12px;border-bottom:1px solid #eef0f3;font-size:14px;vertical-align:top}
+table.report tr:hover td{background:#f5f7fb}
 .col-name{min-width:220px}
-.col-goal{min-width:150px}
 .col-lastweek{min-width:150px}
 .col-progress{min-width:220px}
 .col-support{min-width:170px}
 .col-cum{min-width:150px}
-table.report td textarea{width:100%;border:1px solid #eee;border-radius:6px;padding:7px 9px;font-size:12px;font-family:inherit;resize:vertical;background:#fbfbfb;display:block}
-table.report td textarea:focus{border-color:#7c3aed;outline:none;background:#fff}
-.cum-line{display:flex;align-items:center;gap:5px;font-size:11px;color:#6d28d9;margin:3px 0;white-space:nowrap}
-.cum-line input{width:52px;padding:4px 6px;border:1px solid #d5ccff;border-radius:5px;font-size:12px;text-align:center}
+table.report td textarea{width:100%;border:1px solid #eee;border-radius:6px;padding:7px 9px;font-size:13px;font-family:inherit;resize:vertical;background:#fbfbfb;display:block}
+table.report td textarea:focus{border-color:#1d2f52;outline:none;background:#fff}
+.cum-line{display:flex;align-items:center;gap:5px;font-size:12px;color:#14213d;margin:3px 0;white-space:nowrap}
+.cum-line input{width:52px;padding:4px 6px;border:1px solid #ccd9ec;border-radius:5px;font-size:13px;text-align:center}
 .cum-line .cum-total{font-weight:700}
-.no-cum{color:#ccc;font-size:12px}
+.no-cum{color:#ccc;font-size:13px}
 
 /* 附件 */
 .att-area{margin-top:6px}
 .att-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
-.att-link{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#2563eb;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:2px 8px;text-decoration:none}
+.att-link{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#2563eb;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:2px 8px;text-decoration:none}
 .att-link:hover{background:#dbeafe}
-.att-btn{font-size:11px;color:#6d28d9;background:none;border:1px dashed #c4b5fd;border-radius:6px;padding:3px 10px;cursor:pointer}
-.att-btn:hover{background:#f5f3ff}
+.att-btn{font-size:12px;color:#14213d;background:none;border:1px dashed #bccae0;border-radius:6px;padding:3px 10px;cursor:pointer}
+.att-btn:hover{background:#eef2f8}
 
 /* AI 提炼按钮 */
-.polish-btn{display:inline-block;margin-top:6px;font-size:11px;color:#6d28d9;background:#f5f3ff;border:1px dashed #c4b5fd;border-radius:6px;padding:3px 10px;cursor:pointer}
-.polish-btn:hover{background:#ede9fe}
+.polish-btn{display:inline-block;margin-top:6px;font-size:12px;color:#14213d;background:#eef2f8;border:1px dashed #bccae0;border-radius:6px;padding:3px 10px;cursor:pointer}
+.polish-btn:hover{background:#e6edf7}
 .polish-btn:disabled{opacity:.6;cursor:not-allowed}
 
 /* 工作事项概览 */
 .overview-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
 .overview-head h2{margin:0}
-.ov-list{display:flex;flex-wrap:wrap;gap:8px}
-.ov-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;background:#faf9ff;border:1px solid #eee;border-radius:18px;padding:5px 12px;cursor:pointer}
-.ov-chip:hover{border-color:#7c3aed}
+.ov-list{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ov-chip{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:13px;background:#f5f7fb;border:1px solid #eee;border-radius:10px;padding:8px 12px;cursor:pointer}
+.ov-chip:hover{border-color:#1d2f52}
+.ov-chip .ov-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:760px){.ov-list{grid-template-columns:1fr}}
 
 .form-group{margin-bottom:12px}
-.form-group label{display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:4px}
-.form-group input,.form-group select,.form-group textarea{width:100%;padding:9px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;font-family:inherit}
+.form-group label{display:block;font-size:13px;font-weight:600;color:#555;margin-bottom:4px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:9px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit}
 .form-group textarea{min-height:64px;resize:vertical}
-.form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:#7c3aed;outline:none}
+.form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:#1d2f52;outline:none}
 
-.btn{padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none}
-.btn-primary{background:#7c3aed;color:#fff}
-.btn-outline{background:#fff;color:#7c3aed;border:2px solid #7c3aed}
-.btn-gray{background:#f0f0f0;color:#666}
-.btn-sm{padding:4px 12px;font-size:11px}
+.btn{padding:8px 20px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none}
+.btn-primary{background:#1d2f52;color:#fff}
+.btn-outline{background:#fff;color:#1d2f52;border:2px solid #1d2f52}
+.btn-gray{background:#eef0f3;color:#666}
+.btn-sm{padding:4px 12px;font-size:12px}
 .btn-group{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
 
 .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
 .metric{background:#fff;border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
-.metric .m-label{font-size:12px;color:#888}
-.metric .m-value{font-size:24px;font-weight:700;margin-top:2px}
-.section-title{font-size:15px;font-weight:700;margin:18px 0 10px;display:flex;align-items:center;gap:8px}
-.section-title .bar{width:4px;height:16px;background:#7c3aed;border-radius:2px}
+.metric .m-label{font-size:13px;color:#888}
+.metric .m-value{font-size:25px;font-weight:700;margin-top:2px}
+.section-title{font-size:16px;font-weight:700;margin:18px 0 10px;display:flex;align-items:center;gap:8px}
+.section-title .bar{width:4px;height:16px;background:#1d2f52;border-radius:2px}
 .goal-block{margin-bottom:12px}
-.goal-head{font-size:13px;font-weight:700;color:#6d28d9;padding:10px 14px;background:#f7f5ff;border-radius:10px;margin-bottom:8px}
+.goal-head{font-size:14px;font-weight:700;color:#14213d;padding:10px 14px;background:#eef2f8;border-radius:10px;margin-bottom:8px}
 .key-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #f5f5f5;flex-wrap:wrap}
-.key-item .ki-name{font-weight:600;font-size:13px}
-.key-item .ki-cum{margin-left:auto;font-size:12px;color:#6d28d9;font-weight:600}
+.key-item .ki-name{font-weight:600;font-size:14px}
+.key-item .ki-cum{margin-left:auto;font-size:13px;color:#14213d;font-weight:600}
 .member-group{margin-bottom:10px}
-.member-head{font-size:13px;font-weight:700;color:#6d28d9;padding:8px 12px;background:#f7f5ff;border-radius:8px;margin-bottom:6px;display:flex;align-items:center;gap:8px}
-.member-head .m-avatar{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700}
-.todo-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid #f5f5f5;font-size:13px}
+.member-head{font-size:14px;font-weight:700;color:#14213d;padding:8px 12px;background:#eef2f8;border-radius:8px;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.member-head .m-avatar{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700}
+.todo-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid #f5f5f5;font-size:14px}
 .todo-item .dot{width:7px;height:7px;border-radius:50%;margin-top:7px;flex-shrink:0}
 
-.hidden{display:none}
-.empty{text-align:center;padding:30px;color:#999;font-size:14px}
+.hidden{display:none!important}
+.empty{text-align:center;padding:30px;color:#999;font-size:15px}
 
 /* 登录页 */
 .login-wrap{max-width:400px;margin:40px auto;padding:20px}
 .login-card{background:#fff;border-radius:16px;padding:32px 30px;box-shadow:0 4px 20px rgba(0,0,0,.06)}
-.login-card .logo{font-size:20px;font-weight:700;color:#5b21b6;text-align:center;margin-bottom:4px}
-.login-card .sub{font-size:12px;color:#999;text-align:center;margin-bottom:24px}
-.login-card .err{font-size:12px;color:#dc2626;background:#fee2e2;border-radius:8px;padding:8px 12px;margin-bottom:12px;display:none}
-.login-card input{width:100%;padding:11px 14px;border:1px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;margin-bottom:12px}
-.login-card input:focus{border-color:#7c3aed;outline:none}
-.login-card .btn{width:100%;padding:11px;font-size:14px}
-.login-card .tip{font-size:11px;color:#bbb;text-align:center;margin-top:14px}
-.quick-login{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px}
-.quick-btn{font-size:12px;color:#6d28d9;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:16px;padding:5px 14px;cursor:pointer;transition:.15s}
-.quick-btn:hover{background:#ede9fe;border-color:#c4b5fd}
+.login-card .logo{font-size:21px;font-weight:700;color:#14213d;text-align:center;margin-bottom:4px}
+.login-card .sub{font-size:13px;color:#999;text-align:center;margin-bottom:24px}
+.login-card .err{font-size:13px;color:#dc2626;background:#fee2e2;border-radius:8px;padding:8px 12px;margin-bottom:12px;display:none}
 
-.logout-btn{font-size:12px;color:#fff;background:rgba(255,255,255,.2);border:none;border-radius:6px;padding:4px 10px;cursor:pointer}
+/* 弹窗 */
+.modal-mask{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:100}
+.modal-card{background:#fff;border-radius:14px;padding:24px;width:360px;max-width:90vw;box-shadow:0 10px 30px rgba(0,0,0,.15)}
+.modal-card .err{font-size:13px;color:#dc2626;background:#fee2e2;border-radius:8px;padding:8px 12px;margin-bottom:4px}
+.modal-card input{width:100%;border:1px solid #ddd;border-radius:8px;padding:9px 12px;font-size:14px;font-family:inherit}
+.modal-card input:focus{outline:none;border-color:#1d2f52}
+.member-row{display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid #f0f0f0}
+.member-row .member-name{font-weight:600;font-size:14px}
+.login-card input{width:100%;padding:11px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px;font-family:inherit;margin-bottom:12px}
+.login-card input:focus{border-color:#1d2f52;outline:none}
+.login-card .btn{width:100%;padding:11px;font-size:15px}
+.login-card .tip{font-size:12px;color:#bbb;text-align:center;margin-top:14px}
+.quick-login{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px}
+.quick-btn{font-size:13px;color:#14213d;background:#eef2f8;border:1px solid #d8e2f0;border-radius:16px;padding:5px 14px;cursor:pointer;transition:.15s}
+.quick-btn:hover{background:#e6edf7;border-color:#bccae0}
+
+.logout-btn{font-size:13px;color:#fff;background:rgba(255,255,255,.2);border:none;border-radius:6px;padding:4px 10px;cursor:pointer}
 .logout-btn:hover{background:rgba(255,255,255,.3)}
 
 /* AI 审阅 */
@@ -147,80 +163,84 @@ table.report td textarea:focus{border-color:#7c3aed;outline:none;background:#fff
 @keyframes spin{to{transform:rotate(360deg)}}
 .btn.loading{opacity:.7;cursor:not-allowed}
 
-.ai-notice{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #ddd6fe;border-radius:12px;padding:12px 18px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.04);font-size:13px;color:#555}
-.ai-notice .spinner{border-color:rgba(124,58,237,.25);border-top-color:#7c3aed}
+.ai-notice{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #d8e2f0;border-radius:12px;padding:12px 18px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.04);font-size:14px;color:#555}
+.ai-notice .spinner{border-color:rgba(124,58,237,.25);border-top-color:#1d2f52}
 
-.ai-bubble{background:#f7f5ff;border:1px solid #e2dcff;border-radius:14px;padding:16px 18px;margin-bottom:12px}
-.ai-bubble .b-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12px;color:#6d28d9;font-weight:600}
-.ai-bubble .b-item{font-size:13px;color:#333;line-height:1.7}
-.ai-bubble .b-type{display:inline-block;font-size:10px;padding:1px 8px;border-radius:8px;background:#ede9fe;color:#6d28d9;font-weight:600}
+.ai-bubble{background:#eef2f8;border:1px solid #dde6f3;border-radius:14px;padding:16px 18px;margin-bottom:12px}
+.ai-bubble .b-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;color:#14213d;font-weight:600}
+.ai-bubble .b-item{font-size:14px;color:#333;line-height:1.7}
+.ai-bubble .b-type{display:inline-block;font-size:11px;padding:1px 8px;border-radius:8px;background:#e6edf7;color:#14213d;font-weight:600}
 .ai-bubble .b-actions{display:flex;gap:10px;margin-top:12px}
-.ai-progress{font-size:12px;color:#999;text-align:center;margin-top:6px}
+.ai-progress{font-size:13px;color:#999;text-align:center;margin-top:6px}
 
-@keyframes flashRow{0%{background:#ede9fe}100%{background:transparent}}
+@keyframes flashRow{0%{background:#e6edf7}100%{background:transparent}}
 .flash-row{animation:flashRow 1.2s ease}
 
 /* ========== 汇报视图美化 ========== */
 .scene-tabs{display:flex;gap:8px}
-.scene-tab{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:18px;padding:5px 16px;font-size:12px;cursor:pointer;transition:.2s;white-space:nowrap}
+.scene-tab{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:18px;padding:5px 16px;font-size:13px;cursor:pointer;transition:.2s;white-space:nowrap}
 .scene-tab:hover{background:rgba(255,255,255,.25)}
-.scene-tab.active{background:#fff;color:#7c3aed;font-weight:700;border-color:#fff}
+.scene-tab.active{background:#fff;color:#1d2f52;font-weight:700;border-color:#fff}
 
-.ai-summary{background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #ddd6fe;border-radius:14px;padding:16px 20px;margin-bottom:14px;display:flex;align-items:flex-start;gap:12px}
-.ai-summary .ai-tag{background:#7c3aed;color:#fff;font-size:10px;padding:2px 12px;border-radius:12px;white-space:nowrap;margin-top:2px;font-weight:600}
-.ai-summary .summary-text{font-size:13px;color:#333;line-height:1.7}
+.ai-summary{background:linear-gradient(135deg,#eef2f8,#e6edf7);border:1px solid #d8e2f0;border-radius:14px;padding:16px 20px;margin-bottom:14px;display:flex;align-items:flex-start;gap:12px}
+.ai-summary .ai-tag{background:#1d2f52;color:#fff;font-size:11px;padding:2px 12px;border-radius:12px;white-space:nowrap;margin-top:2px;font-weight:600}
+.ai-summary .summary-text{font-size:14px;color:#333;line-height:1.7}
 
 .legend{display:flex;gap:12px;flex-wrap:wrap;align-items:center;background:#fff;border-radius:12px;padding:10px 16px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
-.legend .lg-label{font-size:12px;font-weight:600;color:#555;margin-right:4px}
-.legend .lg-item{display:flex;align-items:center;gap:5px;font-size:12px;color:#555}
+.legend .lg-label{font-size:13px;font-weight:600;color:#555;margin-right:4px}
+.legend .lg-item{display:flex;align-items:center;gap:5px;font-size:13px;color:#555}
 .legend .lg-dot{width:10px;height:10px;border-radius:50%;display:inline-block}
 
 .metric{display:flex;align-items:center;gap:12px}
-.metric .m-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
-.metric .m-trend{font-size:11px;color:#888;margin-top:2px}
+.metric .m-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.metric .m-trend{font-size:12px;color:#888;margin-top:2px}
 
 .chart-card{background:#fff;border-radius:14px;padding:16px 20px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:14px}
-.chart-card .chart-title{font-size:13px;font-weight:700;margin-bottom:2px;color:#333}
-.chart-card .chart-src{font-size:11px;color:#999;margin-bottom:10px}
+.chart-card .chart-title{font-size:14px;font-weight:700;margin-bottom:2px;color:#333}
+.chart-card .chart-src{font-size:12px;color:#999;margin-bottom:10px}
 .chart-box{position:relative;height:200px}
 
 .daily-card{background:#fff;border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.04);overflow:hidden}
 .daily-head{padding:14px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
 .daily-head .left{display:flex;align-items:center;gap:8px}
-.daily-head .title{font-size:14px;font-weight:700}
-.daily-head .sub{font-size:12px;color:#999}
-.daily-arrow{color:#999;font-size:12px}
+.daily-head .title{font-size:15px;font-weight:700}
+.daily-head .sub{font-size:13px;color:#999}
+.daily-arrow{color:#999;font-size:13px}
 .daily-body{padding:0 20px 16px}
 
 .todo-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .todo-card{background:#fff;border-radius:14px;padding:16px 20px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
-.t-title{font-size:14px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px}
-.t-sub{font-size:11px;color:#999;margin-bottom:10px}
+.t-title{font-size:15px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.t-sub{font-size:12px;color:#999;margin-bottom:10px}
+.todo-actions{display:flex;gap:6px;flex-shrink:0;margin-left:auto}
+.todo-item{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f5f5f5}
+.todo-item .t-content{flex:1;font-size:13px}
+.todo-work{display:inline-block;background:#e6edf7;color:#14213d;font-size:12px;font-weight:600;border-radius:6px;padding:1px 8px;margin-right:6px}
 
 .dash-actions{display:flex;gap:8px;align-items:center}
 
-.ann-mini{font-size:11px;color:#6d28d9;background:none;border:1px dashed #c4b5fd;border-radius:6px;padding:2px 8px;cursor:pointer;margin-left:auto}
-.ann-mini:hover{background:#f5f3ff}
+.ann-mini{font-size:12px;color:#14213d;background:none;border:1px dashed #bccae0;border-radius:6px;padding:2px 8px;cursor:pointer;margin-left:auto}
+.ann-mini:hover{background:#eef2f8}
 
 /* 日常明细分组：职能 → 一级模块 → 二级模块 → 人 */
 .func-block{background:#fff;border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.04);padding:14px 20px;margin-bottom:14px}
-.func-head{font-size:14px;font-weight:700;color:#1a1a1a;padding-bottom:10px;border-bottom:2px solid #ede9fe;margin-bottom:6px}
+.func-head{font-size:15px;font-weight:700;color:#1a1a1a;padding-bottom:10px;border-bottom:2px solid #e6edf7;margin-bottom:6px}
 .mod1-block{margin:6px 0}
-.mod1-head{font-size:13px;font-weight:700;color:#6d28d9;background:#f7f5ff;border-radius:8px;padding:7px 12px;margin:8px 0 4px}
+.mod1-head{font-size:14px;font-weight:700;color:#14213d;background:#eef2f8;border-radius:8px;padding:7px 12px;margin:8px 0 4px}
 .mod2-block{margin:4px 0 4px 6px}
-.mod2-head{font-size:12px;color:#555;padding:4px 12px;font-weight:600}
+.mod2-head{font-size:13px;color:#555;padding:4px 12px;font-weight:600}
 .mod2-block .key-item{padding:8px 12px}
-.key-item .m-avatar{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;flex-shrink:0}
+.key-item .m-avatar{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;flex-shrink:0}
 
-.key-members{margin-top:6px;padding:6px 10px;background:#faf9ff;border-radius:8px;display:flex;flex-direction:column;gap:4px}
-.km-line{font-size:12px;color:#666}
+.key-members{margin-top:6px;padding:6px 10px;background:#f5f7fb;border-radius:8px;display:flex;flex-direction:column;gap:4px}
+.km-line{font-size:13px;color:#666}
 
 .kw-atts{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .kw-ops{display:flex;gap:6px;margin-top:8px;flex-shrink:0;align-items:center}
 
 .w-main{flex:1;min-width:0}
-.w-detail{font-size:12px;color:#666;margin-top:4px;line-height:1.6}
-.wd-label{display:inline-block;font-size:11px;color:#6d28d9;background:#f5f3ff;border-radius:4px;padding:0 6px;margin-right:6px}
+.w-detail{font-size:13px;color:#666;margin-top:4px;line-height:1.6}
+.wd-label{display:inline-block;font-size:12px;color:#14213d;background:#eef2f8;border-radius:4px;padding:0 6px;margin-right:6px}
 
 /* 重点工作 + 目标考核 两栏 */
 .dash-cols{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;align-items:start}
@@ -228,25 +248,56 @@ table.report td textarea:focus{border-color:#7c3aed;outline:none;background:#fff
 .dash-col .section-title{margin-top:0}
 .dash-col .key-item{padding:10px 0;border-bottom:1px solid #f5f5f5}
 .dash-col .key-item:last-child{border-bottom:none}
-.goal-kpi{font-size:12px;color:#888;margin:4px 0 8px;line-height:1.6}
-.goal-cum{font-size:12px;color:#6d28d9;font-weight:600;background:#f5f3ff;border-radius:8px;padding:6px 10px;margin-bottom:8px}
+.goal-kpi{font-size:13px;color:#888;margin:4px 0 8px;line-height:1.6}
+.goal-cum{font-size:13px;color:#14213d;font-weight:600;background:#eef2f8;border-radius:8px;padding:6px 10px;margin-bottom:8px}
 
-.ann-inline{padding:10px 14px;background:#faf8ff;border:1px solid #ede9fe;border-radius:10px;margin:0 0 6px}
-.ann-inline-ta{width:100%;min-height:70px;border:1px solid #ddd;border-radius:8px;padding:9px 11px;font-size:13px;font-family:inherit;resize:vertical}
-.ann-inline-result{font-size:12px;color:#16a34a;margin-top:8px}
+.ann-inline{padding:10px 14px;background:#f5f7fb;border:1px solid #e6edf7;border-radius:10px;margin:0 0 6px}
+.ann-inline-ta{width:100%;min-height:70px;border:1px solid #ddd;border-radius:8px;padding:9px 11px;font-size:14px;font-family:inherit;resize:vertical}
+.ann-inline-result{font-size:13px;color:#16a34a;margin-top:8px}
 
 @media(max-width:760px){.metrics{grid-template-columns:repeat(2,1fr)}.topbar{padding:12px 16px}.container{padding:12px}.todo-grid{grid-template-columns:1fr}.scene-tabs{flex-wrap:wrap}.dash-cols{grid-template-columns:1fr}}
+
+/* 个人待办便利贴 */
+.todo-input-row{display:flex;gap:8px;margin-bottom:14px}
+.todo-input-row input{flex:1;border:1px solid #ddd;border-radius:8px;padding:10px 12px;font-size:15px;font-family:inherit}
+.todo-input-row input:focus{outline:none;border-color:#1d2f52}
+.my-todo-list{display:flex;flex-direction:column;gap:8px}
+.my-todo-item{display:flex;align-items:center;gap:10px;padding:11px 14px;background:#fffbe6;border:1px solid #fde68a;border-radius:10px}
+.my-todo-text{flex:1;font-size:15px;color:#333;line-height:1.5}
+.my-todo-done{background:#16a34a;color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:13px;cursor:pointer;flex-shrink:0;transition:all .15s}
+.my-todo-done:hover{background:#15803d}
+.my-todo-done.confirming{background:#ef4444}
+.my-todo-done.confirming:hover{background:#dc2626}
+.my-todo-del{background:none;border:none;color:#bbb;font-size:19px;cursor:pointer;flex-shrink:0}
+.my-todo-del:hover{color:#ef4444}
+
+/* 顶部概览条（员工端） */
+.report-overview{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:14px}
+.ro-item{border-radius:12px;padding:12px 8px;text-align:center}
+.ro-value{font-size:25px;font-weight:800;line-height:1}
+.ro-label{font-size:13px;color:#666;margin-top:6px}
+@media(max-width:760px){.report-overview{grid-template-columns:repeat(3,1fr)}}
 </style>
 </head>
 <body>
 <div class="topbar">
   <span class="logo">WorkReport HR-Pro</span>
-  <div class="user" id="headerUser"><span class="avatar" id="headerAvatar"></span><span id="headerName"></span><button class="logout-btn hidden" id="logoutBtn" onclick="logout()">退出</button></div>
+  <div class="user" id="headerUser" onclick="toggleUserMenu(event)">
+    <span class="avatar" id="headerAvatar"></span>
+    <span id="headerName"></span>
+    <span class="caret">▾</span>
+    <div class="user-menu hidden" id="userMenu">
+      <button class="menu-item hidden" id="memberBtn" onclick="event.stopPropagation();openMemberManage()">成员管理</button>
+      <button class="menu-item hidden" id="pwdBtn" onclick="event.stopPropagation();openChangePwd()">修改密码</button>
+      <button class="menu-item" id="logoutBtn" onclick="event.stopPropagation();logout()">退出登录</button>
+    </div>
+  </div>
 </div>
 
 <div class="container">
   <div class="nav hidden" id="nav">
-    <button class="nav-btn active" data-page="report">填写周报</button>
+    <button class="nav-btn" data-page="my-todo" id="navMyTodo">日常随手记</button>
+    <button class="nav-btn active" data-page="report">工作周报</button>
     <button class="nav-btn hidden" data-page="dashboard" id="navDash">汇报视图</button>
     <button class="nav-btn hidden" data-page="goal-review" id="navGoal">目标考核</button>
   </div>
@@ -269,12 +320,15 @@ table.report td textarea:focus{border-color:#7c3aed;outline:none;background:#fff
   <!-- 周报填写（表格形式） -->
   <div id="page-report" class="hidden">
     <div class="card" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-      <h2 style="margin:0">本周工作汇报 <span style="font-size:12px;color:#888;font-weight:400" id="weekLabel"></span></h2>
+      <h2 style="margin:0">本周工作汇报 <span style="font-size:13px;color:#888;font-weight:400" id="weekLabel"></span></h2>
       <div style="display:flex;gap:8px">
         <button class="btn btn-outline btn-sm" onclick="saveDraft()">保存草稿</button>
         <button class="btn btn-primary btn-sm" onclick="submitReport()">提交周报</button>
       </div>
     </div>
+
+    <!-- 顶部概览条（我的工作状态统计） -->
+    <div class="report-overview" id="reportOverview"></div>
 
     <!-- 我的工作事项概览（表格上方） -->
     <div class="card">
@@ -284,26 +338,25 @@ table.report td textarea:focus{border-color:#7c3aed;outline:none;background:#fff
       </div>
       <div class="ov-list" id="itemsOverview"></div>
       <div id="addItemForm" class="hidden" style="margin-top:16px;padding-top:16px;border-top:1px solid #eee">
-        <h3 style="font-size:14px;margin-bottom:12px">新增工作事项</h3>
+        <h3 style="font-size:15px;margin-bottom:12px">新增工作事项</h3>
         <div class="form-group"><label>职能</label><select id="niFunction" onchange="onFunctionChange()"></select></div>
         <div class="form-group"><label>一级模块（工作模块）</label><select id="niModule1" onchange="onModule1Change()"></select></div>
         <div class="form-group"><label>二级模块（具体工作事项）</label>
           <select id="niModule2"></select>
-          <div style="margin-top:4px;font-size:11px;color:#999">找不到？<a href="#" onclick="showNewModule2();return false" style="color:#6d28d9">新增一个二级模块</a></div>
+          <div style="margin-top:4px;font-size:12px;color:#999">找不到？<a href="#" onclick="showNewModule2();return false" style="color:#14213d">新增一个二级模块</a></div>
         </div>
         <div class="form-group hidden" id="niNewModule2Wrap">
           <label>新二级模块名称</label>
           <input id="niNewModule2" placeholder="例如：海外招聘">
         </div>
         <div class="form-group"><label>工作性质</label><select id="niCategory"><option>年度重点工作</option><option>年度专项工作</option><option>日常常规工作</option></select></div>
-        <div class="form-group"><label>工作目标</label><textarea id="niDesc" placeholder="这个事项要达成什么目标"></textarea></div>
         <div class="form-group"><label>关联年度目标</label><select id="niGoal"></select></div>
         <div class="form-group"><label>预计完成时间</label><input id="niDue" type="date"></div>
         <div class="form-group"><label>是否累计制工作</label><select id="niCum" onchange="toggleCum()"><option value="0">否（一次性项目）</option><option value="1">是（持续累计）</option></select></div>
         <div class="form-group hidden" id="niCumMetricsWrap">
           <label>累计指标（每行一个，格式：指标key|指标名|单位）</label>
           <textarea id="niCumMetrics" placeholder="offer|Offer数|个&#10;onboard|入职数|人"></textarea>
-          <div style="font-size:11px;color:#999;margin-top:4px">常用：访谈填 count|访谈人次|人次；培训填 times|培训场次|场</div>
+          <div style="font-size:12px;color:#999;margin-top:4px">常用：访谈填 count|访谈人次|人次；培训填 times|培训场次|场</div>
         </div>
         <div class="btn-group"><button class="btn btn-primary" onclick="addItem()">确认添加</button><button class="btn btn-gray" onclick="hideAddItem()">取消</button></div>
       </div>
@@ -316,7 +369,6 @@ table.report td textarea:focus{border-color:#7c3aed;outline:none;background:#fff
         <thead>
           <tr>
             <th class="col-name">工作事项</th>
-            <th class="col-goal">工作目标</th>
             <th class="col-lastweek">上周进展情况</th>
             <th class="col-progress">本周进展及下阶段计划</th>
             <th class="col-support">所需支持 / 待决策</th>
@@ -331,7 +383,7 @@ table.report td textarea:focus{border-color:#7c3aed;outline:none;background:#fff
   <!-- 汇报视图 -->
   <div id="page-dashboard" class="hidden">
     <div class="card" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-      <h2 style="margin:0">管理者汇报视图 <span style="font-size:12px;color:#888;font-weight:400" id="dashWeekLabel"></span></h2>
+      <h2 style="margin:0">管理者汇报视图 <span style="font-size:13px;color:#888;font-weight:400" id="dashWeekLabel"></span></h2>
       <button class="btn btn-outline btn-sm" id="btnGenSummary" onclick="generateSummary()">一键 AI 总结</button>
     </div>
 
@@ -351,21 +403,64 @@ table.report td textarea:focus{border-color:#7c3aed;outline:none;background:#fff
       <span class="lg-item"><span class="lg-dot" style="background:#ef4444"></span>暂停/终止</span>
     </div>
 
-    <div class="metrics" id="dashMetrics"></div>
-    <div class="chart-card" id="dashChartCard">
-      <div class="chart-title">近6周关键数据趋势</div>
-      <div class="chart-src">数据来源：每周累计自动汇总</div>
-      <div class="chart-box"><canvas id="chartTrend"></canvas></div>
+    <!-- 待办回溯 -->
+    <div class="card" id="todoReviewCard">
+      <div class="overview-head" style="margin-bottom:6px">
+        <h2 style="font-size:14px">待办回溯</h2>
+        <button class="btn btn-outline btn-sm" id="btnExtractTodo" onclick="extractTodos()">提取待办</button>
+      </div>
+      <div style="font-size:12px;color:#999;margin-bottom:10px">开会前逐条确认待办：已完成 / 未完成顺延 / 取消</div>
+      <div id="todoReviewList"></div>
     </div>
+
     <div id="dashContent"></div>
   </div>
 
   <!-- 目标考核 -->
   <div id="page-goal-review" class="hidden">
     <div class="card" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-      <h2 style="margin:0">目标考核 <span style="font-size:12px;color:#888;font-weight:400" id="goalWeekLabel"></span></h2>
+      <h2 style="margin:0">目标考核 <span style="font-size:13px;color:#888;font-weight:400" id="goalWeekLabel"></span></h2>
     </div>
     <div id="goalReviewContent"></div>
+  </div>
+
+  <!-- 日常随手记（私人便利贴） -->
+  <div id="page-my-todo" class="hidden">
+    <div class="card" style="max-width:680px;margin:0 auto">
+      <h2 style="margin:0;margin-bottom:4px">日常随手记</h2>
+      <div style="font-size:13px;color:#999;margin-bottom:16px">随手记一条待办，做完点"已完成"就归档；没做的第二天还在。</div>
+      <div class="todo-input-row">
+        <input id="myTodoInput" placeholder="记一条待办，例如：和 XX 领导沟通绩效方案" onkeydown="if(event.key==='Enter')addMyTodo()">
+        <button class="btn btn-primary" onclick="addMyTodo()">记下</button>
+      </div>
+      <div id="myTodoList" class="my-todo-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 修改密码弹窗 -->
+<div id="pwdModal" class="modal-mask hidden">
+  <div class="modal-card">
+    <h3 style="margin:0 0 16px">修改密码</h3>
+    <div class="form-group"><label>旧密码</label><input id="pwdOld" type="password" placeholder="输入当前密码"></div>
+    <div class="form-group"><label>新密码</label><input id="pwdNew" type="password" placeholder="至少 6 位"></div>
+    <div class="form-group"><label>确认新密码</label><input id="pwdNew2" type="password" placeholder="再次输入新密码"></div>
+    <div class="err" id="pwdErr" style="display:none"></div>
+    <div class="btn-group" style="margin-top:16px">
+      <button class="btn btn-primary" onclick="submitChangePwd()">确认修改</button>
+      <button class="btn btn-gray" onclick="closeChangePwd()">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- 成员管理弹窗（系统管理员） -->
+<div id="memberModal" class="modal-mask hidden">
+  <div class="modal-card" style="width:440px;max-height:80vh;overflow-y:auto">
+    <h3 style="margin:0 0 16px">成员管理 · 重置密码</h3>
+    <div id="memberList"></div>
+    <div class="btn-group" style="margin-top:16px">
+      <button class="btn btn-gray" onclick="closeMemberManage()">关闭</button>
+    </div>
   </div>
 </div>
 
@@ -420,10 +515,14 @@ function enterApp(user){
   document.getElementById('headerAvatar').style.background = currentUser.avatar_color;
   document.getElementById('headerName').textContent = `${currentUser.name} (${currentUser.role})`;
   document.getElementById('logoutBtn').classList.remove('hidden');
+  document.getElementById('pwdBtn').classList.remove('hidden');
   document.getElementById('nav').classList.remove('hidden');
   if(currentUser.is_manager){
     document.getElementById('navDash').classList.remove('hidden');
     document.getElementById('navGoal').classList.remove('hidden');
+  }
+  if(currentUser.is_sysadmin){
+    document.getElementById('memberBtn').classList.remove('hidden');
   }
   switchPage('report');
 }
@@ -433,16 +532,85 @@ function logout(){
   location.reload();
 }
 
+// ========== 用户下拉菜单 ==========
+function toggleUserMenu(e){
+  e.stopPropagation();
+  document.getElementById('userMenu').classList.toggle('hidden');
+}
+
+// 点击页面其他区域关闭菜单
+document.addEventListener('click', function(){
+  document.getElementById('userMenu').classList.add('hidden');
+});
+
+// ========== 修改密码 ==========
+function openChangePwd(){
+  document.getElementById('userMenu').classList.add('hidden');
+  document.getElementById('pwdModal').classList.remove('hidden');
+  document.getElementById('pwdOld').value = '';
+  document.getElementById('pwdNew').value = '';
+  document.getElementById('pwdNew2').value = '';
+  document.getElementById('pwdErr').textContent = '';
+  document.getElementById('pwdErr').style.display = 'none';
+}
+
+function closeChangePwd(){
+  document.getElementById('pwdModal').classList.add('hidden');
+}
+
+async function submitChangePwd(){
+  const oldPwd = document.getElementById('pwdOld').value;
+  const newPwd = document.getElementById('pwdNew').value;
+  const newPwd2 = document.getElementById('pwdNew2').value;
+  const err = document.getElementById('pwdErr');
+  if(!oldPwd){ err.textContent = '请输入旧密码'; err.style.display='block'; return; }
+  if(newPwd.length < 6){ err.textContent = '新密码至少 6 位'; err.style.display='block'; return; }
+  if(newPwd !== newPwd2){ err.textContent = '两次输入的新密码不一致'; err.style.display='block'; return; }
+  const r = await (await fetch('/api/auth/change-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:currentUser.id, old_password:oldPwd, new_password:newPwd})})).json();
+  if(r.success){
+    alert('密码修改成功');
+    closeChangePwd();
+  } else {
+    err.textContent = r.message || '修改失败';
+    err.style.display = 'block';
+  }
+}
+
+// ========== 重置密码（系统管理员） ==========
+async function openMemberManage(){
+  document.getElementById('userMenu').classList.add('hidden');
+  const r = await (await fetch('/api/users')).json();
+  const list = document.getElementById('memberList');
+  list.innerHTML = r.map(u=>`
+    <div class="member-row">
+      <span class="member-name">${u.name}</span>
+      <span style="font-size:12px;color:#999">${u.username}</span>
+      <button class="btn btn-outline btn-sm" onclick="resetUserPwd(${u.id},'${u.name}')">重置密码</button>
+    </div>`).join('');
+  document.getElementById('memberModal').classList.remove('hidden');
+}
+
+function closeMemberManage(){
+  document.getElementById('memberModal').classList.add('hidden');
+}
+
+async function resetUserPwd(userId, userName){
+  if(!confirm(`确认将 ${userName} 的密码重置为 123456 吗？`)) return;
+  const r = await (await fetch('/api/auth/reset-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({admin_id:currentUser.id, target_user_id:userId, new_password:'123456'})})).json();
+  alert(r.message || (r.success?'已重置':'重置失败'));
+}
+
 document.querySelectorAll('.nav-btn').forEach(b=>b.addEventListener('click',()=>switchPage(b.dataset.page)));
 
 function switchPage(page){
-  ['report','dashboard','goal-review'].forEach(p=>document.getElementById('page-'+p).classList.add('hidden'));
+  ['report','dashboard','goal-review','my-todo'].forEach(p=>document.getElementById('page-'+p).classList.add('hidden'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+page).classList.remove('hidden');
   document.querySelector(`[data-page="${page}"]`).classList.add('active');
   if(page==='report') loadReport();
   if(page==='dashboard') loadDashboard();
   if(page==='goal-review') loadGoalReview();
+  if(page==='my-todo') loadMyTodos();
 }
 
 function stBadge(status){ return `<span class="st ${ST_CLASS[status]||'st-doing'}">${ST_ICON[status]||'●'} ${status}</span>`; }
@@ -450,15 +618,45 @@ function catTag(cat){ const m={'年度重点工作':'tag-cat-key','自主专项�
 function impTag(imp){ const m={'高':'tag-high','中':'tag-mid','低':'tag-low'}; return `<span class="tag ${m[imp]||'tag-mid'}">${imp||'中'}</span>`; }
 
 // ========== 周报填写（表格） ==========
+function renderReportOverview(data){
+  const box = document.getElementById('reportOverview');
+  const total = data.length;
+  // 按状态统计
+  let doing = 0, done = 0, overdue = 0, upcoming = 0, paused = 0;
+  let keyCount = 0;  // 年度重点工作
+  data.forEach(d=>{
+    if(d.category==='年度重点工作') keyCount++;
+    const s = d.status;
+    if(s==='已完成') done++;
+    else if(s==='延期') overdue++;
+    else if(s==='临期') upcoming++;
+    else if(s==='暂停'||s==='终止') paused++;
+    else doing++;
+  });
+  const cards = [
+    {label:'全部事项', value:total, color:'#2563eb', bg:'#dbeafe'},
+    {label:'重点工作', value:keyCount, color:'#1d2f52', bg:'#e6edf7'},
+    {label:'进行中', value:doing, color:'#16a34a', bg:'#dcfce7'},
+    {label:'已完成', value:done, color:'#0891b2', bg:'#cffafe'},
+    {label:'临期', value:upcoming, color:'#eab308', bg:'#fef9c3'},
+    {label:'延期', value:overdue, color:'#f97316', bg:'#ffedd5'},
+  ];
+  box.innerHTML = cards.map(c=>`
+    <div class="ro-item" style="background:${c.bg}">
+      <div class="ro-value" style="color:${c.color}">${c.value}</div>
+      <div class="ro-label">${c.label}</div>
+    </div>`).join('');
+}
+
 function goalFoldHtml(d){
   let content;
   if(currentUser.is_manager){
     const opts = allGoals.map(g=>`<option value="${g.id}" ${d.goal_id===g.id?'selected':''}>${g.name} (${g.weight}%)</option>`).join('');
-    content = `<select class="goal-select" data-item-id="${d.work_item_id}" onchange="changeGoal(this)" style="width:100%;font-size:12px;color:#6d28d9;border:1px solid #d5ccff;border-radius:6px;padding:4px 6px">${opts}</select>`;
+    content = `<select class="goal-select" data-item-id="${d.work_item_id}" onchange="changeGoal(this)" style="width:100%;font-size:13px;color:#14213d;border:1px solid #ccd9ec;border-radius:6px;padding:4px 6px">${opts}</select>`;
   } else {
-    content = `<div style="font-size:12px;color:#6d28d9">🎯 ${d.goal_name||'未对齐目标'}</div>`;
+    content = `<div style="font-size:13px;color:#14213d">🎯 ${d.goal_name||'未对齐目标'}</div>`;
   }
-  return `<details style="margin-top:5px"><summary style="cursor:pointer;font-size:11px;color:#6d28d9;font-weight:600">▽ 对齐年度目标</summary><div style="margin-top:6px">${content}</div></details>`;
+  return `<details style="margin-top:5px"><summary style="cursor:pointer;font-size:12px;color:#14213d;font-weight:600">▽ 对齐年度目标</summary><div style="margin-top:6px">${content}</div></details>`;
 }
 
 async function loadReport(){
@@ -468,17 +666,20 @@ async function loadReport(){
   const attMap = {};
   atts.forEach(a=>{ (attMap[a.work_item_id]=attMap[a.work_item_id]||[]).push(a); });
 
+  // 0. 顶部概览条（我的工作状态统计）
+  renderReportOverview(data);
+
   // 1. 工作事项概览
   const ovBox = document.getElementById('itemsOverview');
-  if(!data.length){ ovBox.innerHTML = '<div style="font-size:12px;color:#999">暂无工作事项，点击右上角"新增事项"添加</div>'; }
+  if(!data.length){ ovBox.innerHTML = '<div style="font-size:13px;color:#999">暂无工作事项，点击右上角"新增事项"添加</div>'; }
   else{
     ovBox.innerHTML = data.map(d=>`
-      <span class="ov-chip">${d.work_item_name} ${stBadge(d.status)}</span>`).join('');
+      <span class="ov-chip"><span class="ov-name">${d.work_item_name}</span>${stBadge(d.status)}</span>`).join('');
   }
 
   // 2. 明细表格
   const body = document.getElementById('reportBody');
-  if(!data.length){ body.innerHTML = '<tr><td colspan="6" class="empty">暂无工作事项，请先新增事项</td></tr>'; return; }
+  if(!data.length){ body.innerHTML = '<tr><td colspan="5" class="empty">暂无工作事项，请先新增事项</td></tr>'; return; }
   body.innerHTML = data.map(d => {
     let cumHtml = '';
     if(d.is_cumulative && d.cum_metrics && d.cum_metrics.length){
@@ -500,14 +701,13 @@ async function loadReport(){
       <td class="col-name">
         <div style="font-weight:700">${d.work_item_name}</div>
         <div style="margin-top:3px">${catTag(d.category)} ${impTag(d.importance)} ${stBadge(d.status)} ${d.is_cumulative?'<span class="tag tag-cum">累计制</span>':''}</div>
-        <div style="font-size:11px;color:#888;margin-top:3px">${d.due_date?'截止 '+d.due_date:''}</div>
+        <div style="font-size:12px;color:#888;margin-top:3px">${d.due_date?'截止 '+d.due_date:''}</div>
         ${goalFoldHtml(d)}
         ${attHtml}
       </td>
-      <td class="col-goal">${d.target_desc||'<span style="color:#ccc">—</span>'}</td>
-      <td class="col-lastweek"><div style="font-size:12px;color:#666">${d.last_week_progress||'<span style="color:#ccc">无</span>'}</div></td>
+      <td class="col-lastweek"><div style="font-size:13px;color:#666">${d.last_week_progress||'<span style="color:#ccc">无</span>'}</div></td>
       <td class="col-progress">
-        <textarea class="p-input" data-field="progress" placeholder="本周进展 + 下阶段计划">${d.progress||''}</textarea>
+        <textarea class="p-input" data-field="progress" placeholder="已完成：……&#10;下周计划开展：……">${d.progress||''}</textarea>
         <button class="polish-btn" data-item-id="${d.work_item_id}" onclick="polishText(this)">✨ AI 提炼</button>
       </td>
       <td class="col-support"><textarea class="p-input" data-field="blockers" placeholder="需要什么支持 / 待决策事项">${d.blockers||''}</textarea></td>
@@ -678,11 +878,10 @@ async function addItem(){
   const goalId = document.getElementById('niGoal').value;
   await fetch('/api/items',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
     name: m2Name, category:document.getElementById('niCategory').value,
-    owner_id:currentUser.id, goal_id:goalId?parseInt(goalId):null, target_desc:document.getElementById('niDesc').value,
+    owner_id:currentUser.id, goal_id:goalId?parseInt(goalId):null,
     due_date:document.getElementById('niDue').value, is_cumulative:isCum, cum_metrics:cumMetrics,
     function:funcName, module1:m1Name, module2:m2Name
   })});
-  document.getElementById('niDesc').value='';
   document.getElementById('niNewModule2').value=''; document.getElementById('niNewModule2Wrap').classList.add('hidden');
   hideAddItem(); loadReport();
 }
@@ -694,29 +893,62 @@ let trendChart = null;     // 趋势图实例
 async function loadDashboard(){
   document.getElementById('dashWeekLabel').textContent = `本周: ${WEEK_START}`;
   dashData = await (await fetch(`/api/agent/dashboard?week_start=${WEEK_START}`)).json();
-  const km = dashData.key_metrics;
-
-  // 1. 关键数据卡片（带图标）
-  const metrics = [
-    {label:'累计入职', value:km.onboard||0, icon:'👥', bg:'#dcfce7', color:'#16a34a'},
-    {label:'累计 Offer', value:km.offer||0, icon:'📄', bg:'#dbeafe', color:'#2563eb'},
-    {label:'累计访谈人次', value:km.count||0, icon:'💬', bg:'#ede9fe', color:'#7c3aed'},
-    {label:'进行中事项', value:dashData.members.reduce((s,m)=>s+m.items.length,0), icon:'📋', bg:'#ffedd5', color:'#f97316'},
-  ];
-  document.getElementById('dashMetrics').innerHTML = metrics.map(m=>`
-    <div class="metric">
-      <div class="m-icon" style="background:${m.bg}">${m.icon}</div>
-      <div><div class="m-label">${m.label}</div><div class="m-value" style="color:${m.color}">${m.value}</div></div>
-    </div>`).join('');
 
   // AI 总结横幅（自动生成或读取）
   await loadSummaryBanner();
 
-  // 2. 趋势图
-  drawTrend(dashData.trend);
+  // 上周待办回溯
+  await loadTodoReview();
 
-  // 3. 内容区（重点 + 日常 + 待办决策）
+  // 内容区（重点 + 日常 + 待办决策）
   renderDashContent();
+}
+
+// ========== 上周待办回溯 ==========
+function getLastWeekStart(){
+  const d = new Date(WEEK_START);
+  d.setDate(d.getDate() - 7);
+  return d.toISOString().split('T')[0];
+}
+
+async function loadTodoReview(){
+  // 显示所有"进行中"的待办（未完成待办，开会前逐条确认）
+  const r = await (await fetch(`/api/agent/todos?status=进行中`)).json();
+  const list = document.getElementById('todoReviewList');
+  if(!r.length){
+    list.innerHTML = '<div style="font-size:12px;color:#999">暂无待办。点击右上角「提取待办」从本周周报提取。</div>';
+    return;
+  }
+  list.innerHTML = r.map(t=>{
+    const due = t.due_date ? `<span class="tag tag-mid">截止 ${t.due_date}</span>` : '';
+    const workName = t.work_item_name ? `<span class="todo-work">${t.work_item_name}</span>` : '';
+    return `<div class="todo-item">
+      <span class="dot" style="background:#1d2f52"></span>
+      <span class="t-content">${workName}<b>${t.owner_name}</b>：${t.content} ${due}</span>
+      <span class="todo-actions">
+        <button class="btn btn-primary btn-sm" onclick="reviewTodo(${t.id},'done')">已完成</button>
+        <button class="btn btn-outline btn-sm" onclick="reviewTodo(${t.id},'postpone')">未完成</button>
+        <button class="btn btn-gray btn-sm" onclick="reviewTodo(${t.id},'cancel')">取消</button>
+      </span>
+    </div>`;
+  }).join('');
+}
+
+async function extractTodos(){
+  const btn = document.getElementById('btnExtractTodo');
+  btn.disabled = true;
+  btn.textContent = '提取中…';
+  const r = await (await fetch('/api/agent/extract-todos',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({week_start:WEEK_START})})).json();
+  btn.disabled = false;
+  btn.textContent = '提取待办';
+  alert(r.message || '提取完成');
+  // 提取的是本周待办，回溯要看上周；这里也顺带刷新当前周（如果管理本周就在回溯里看上周）
+  await loadTodoReview();
+}
+
+async function reviewTodo(id, action){
+  await fetch(`/api/agent/todos/${id}/review?week_start=${WEEK_START}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action})});
+  await loadTodoReview();
 }
 
 async function loadGoalReview(){
@@ -733,19 +965,71 @@ async function loadGoalReview(){
     const aggCum = gr.agg_cum && Object.keys(gr.agg_cum).length ? Object.entries(gr.agg_cum).map(([k,v])=>`${k}:${v}`).join(' ') : '';
     const works = gr.works.map(w=>{
       const wCum = w.is_cumulative && w.cum_value ? Object.entries(w.cum_value).map(([k,v])=>`${k}:${v}`).join(' ') : '';
-      return `<div class="key-item"><span class="ki-name">${w.name}</span>${stBadge(w.status)}<span style="font-size:11px;color:#888">${w.owner_name}</span>${wCum?`<span class="ki-cum">${wCum}</span>`:''}${w.progress?`<div class="w-detail"><span class="wd-label">本周进展</span>${w.progress}</div>`:''}</div>`;
+      return `<div class="key-item"><span class="ki-name">${w.name}</span>${stBadge(w.status)}<span style="font-size:12px;color:#888">${w.owner_name}</span>${wCum?`<span class="ki-cum">${wCum}</span>`:''}${w.progress?`<div class="w-detail"><span class="wd-label">本周进展</span>${w.progress}</div>`:''}</div>`;
     }).join('');
     return `<div class="card">
-      <div class="goal-head" style="display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700;color:#1a1a1a;margin-bottom:6px">
-        <span class="bar" style="width:4px;height:16px;background:#7c3aed;border-radius:2px"></span>
+      <div class="goal-head" style="display:flex;align-items:center;gap:8px;font-size:16px;font-weight:700;color:#1a1a1a;margin-bottom:6px">
+        <span class="bar" style="width:4px;height:16px;background:#1d2f52;border-radius:2px"></span>
         ${gr.goal_name}
-        <span style="font-weight:400;font-size:12px;color:#888">权重 ${gr.weight}%</span>
+        <span style="font-weight:400;font-size:13px;color:#888">权重 ${gr.weight}%</span>
       </div>
       ${gr.kpis?`<div class="goal-kpi">衡量标准：${gr.kpis}</div>`:''}
       ${aggCum?`<div class="goal-cum">累计汇总：${aggCum}</div>`:''}
       <div style="margin-top:8px">${works}</div>
     </div>`;
   }).join('');
+}
+
+// ========== 日常随手记（私人便利贴） ==========
+async function loadMyTodos(){
+  const list = document.getElementById('myTodoList');
+  const r = await fetch(`/api/personal-todos?owner_id=${currentUser.id}`);
+  const todos = await r.json();
+  if(!todos.length){
+    list.innerHTML = '<div class="empty">暂无待办，随手记一条吧</div>';
+    return;
+  }
+  list.innerHTML = todos.map(t=>`
+    <div class="my-todo-item">
+      <span class="my-todo-text">${t.content}</span>
+      <button class="my-todo-done" onclick="clickDone(this, ${t.id})">已完成</button>
+    </div>`).join('');
+}
+
+async function addMyTodo(){
+  const input = document.getElementById('myTodoInput');
+  const content = input.value.trim();
+  if(!content) return;
+  await fetch('/api/personal-todos',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({owner_id:currentUser.id, content})});
+  input.value = '';
+  loadMyTodos();
+}
+
+function clickDone(btn, id){
+  // 两段式确认：第一次点击进入"确认完成？"，3秒内再点才归档
+  if(!btn.dataset.confirming){
+    btn.dataset.confirming = '1';
+    btn.textContent = '确认完成？';
+    btn.classList.add('confirming');
+    clearTimeout(btn._timer);
+    btn._timer = setTimeout(()=>{
+      btn.dataset.confirming = '';
+      btn.textContent = '已完成';
+      btn.classList.remove('confirming');
+    }, 3000);
+    return;
+  }
+  completeMyTodo(id);
+}
+
+async function completeMyTodo(id){
+  await fetch(`/api/personal-todos/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({done:1})});
+  loadMyTodos();
+}
+
+async function deleteMyTodo(id){
+  await fetch(`/api/personal-todos/${id}`,{method:'DELETE'});
+  loadMyTodos();
 }
 
 async function loadSummaryBanner(){
@@ -799,7 +1083,7 @@ function drawTrend(trend){
   const datasets = [
     {key:'onboard', label:'入职', color:'#16a34a'},
     {key:'offer', label:'Offer', color:'#2563eb'},
-    {key:'count', label:'访谈人次', color:'#7c3aed'},
+    {key:'count', label:'访谈人次', color:'#1d2f52'},
   ];
   if(trendChart){ trendChart.destroy(); }
   trendChart = new Chart(canvas, {
@@ -852,7 +1136,7 @@ function renderDashContent(){
         <button class="ann-mini" onclick="uploadKeyAtt(this)">📎 上传附件</button>
         <input type="file" style="display:none" onchange="doUploadKeyAtt(this, ${idx})">
       </div>`;
-      html.push(`<div class="key-item" data-item-id="${it.id}" data-item-name="${it.name}"><div class="w-main"><span class="ki-name">${it.name}</span>${impTag(it.importance)}${stBadge(it.status)}<span style="font-size:11px;color:#888">${it.owner_names}${it.due_date?' · 截止'+it.due_date:''}</span>${cumTxt?`<span class="ki-cum">${cumTxt}</span>`:''}${bodyHtml}${attHtml}</div>${opsHtml}</div>`);
+      html.push(`<div class="key-item" data-item-id="${it.id}" data-item-name="${it.name}"><div class="w-main"><span class="ki-name">${it.name}</span>${impTag(it.importance)}${stBadge(it.status)}<span style="font-size:12px;color:#888">${it.owner_names}${it.due_date?' · 截止'+it.due_date:''}</span>${cumTxt?`<span class="ki-cum">${cumTxt}</span>`:''}${bodyHtml}${attHtml}</div>${opsHtml}</div>`);
     });
   }
 
@@ -869,11 +1153,10 @@ function renderDashContent(){
           m2.works.forEach(w=>{
             const cumTxt = w.is_cumulative && w.cum_value ? Object.entries(w.cum_value).map(([k,v])=>`${k}:${v}`).join(' ') : '';
             const detail = `
-              ${w.target_desc?`<div class="w-detail"><span class="wd-label">目标</span>${w.target_desc}</div>`:''}
               ${w.progress?`<div class="w-detail"><span class="wd-label">本周成果/下阶段</span>${w.progress}${w.next_plan?' / '+w.next_plan:''}</div>`:''}
               ${w.due_date?`<div class="w-detail"><span class="wd-label">截止</span>${w.due_date}</div>`:''}
               ${w.blockers?`<div class="w-detail"><span class="wd-label">需支持</span>${w.blockers}</div>`:''}`;
-            html.push(`<div class="key-item" data-item-id="${w.id}" data-item-name="${w.work_item_name}"><span class="m-avatar" style="background:${w.avatar_color}">${(w.owner_name||'?')[0]}</span><div class="w-main"><span class="ki-name">${w.work_item_name}</span>${stBadge(w.status)}<span style="font-size:11px;color:#888">${w.owner_name}</span>${cumTxt?`<span class="ki-cum">${cumTxt}</span>`:''}${detail}</div><button class="ann-mini" onclick="toggleAnnotate(this)">✎ 批注</button></div>`);
+            html.push(`<div class="key-item" data-item-id="${w.id}" data-item-name="${w.work_item_name}"><span class="m-avatar" style="background:${w.avatar_color}">${(w.owner_name||'?')[0]}</span><div class="w-main"><span class="ki-name">${w.work_item_name}</span>${stBadge(w.status)}<span style="font-size:12px;color:#888">${w.owner_name}</span>${cumTxt?`<span class="ki-cum">${cumTxt}</span>`:''}${detail}</div><button class="ann-mini" onclick="toggleAnnotate(this)">✎ 批注</button></div>`);
           });
           html.push('</div>');
         });
@@ -892,15 +1175,15 @@ function renderDashContent(){
     html.push('<div class="todo-card"><div class="t-title">📋 下阶段待办</div><div class="t-sub">未完成自动顺延</div>');
     if(todos.length){
       todos.forEach(t=>{
-        const stCls = t.status==='已完成'?'bg:#16a34a':(t.status==='已逾期'?'bg:#f97316':'bg:#7c3aed');
+        const stCls = t.status==='已完成'?'bg:#16a34a':(t.status==='已逾期'?'bg:#f97316':'bg:#1d2f52');
         html.push(`<div class="todo-item"><span class="dot" style="${stCls}"></span><span class="t-content">${t.content}</span></div>`);
       });
-    } else { html.push('<div style="font-size:12px;color:#999">暂无待办</div>'); }
+    } else { html.push('<div style="font-size:13px;color:#999">暂无待办</div>'); }
     html.push('</div>');
     html.push('<div class="todo-card"><div class="t-title">⚡ 需关注/决策事项</div><div class="t-sub">周例会共识</div>');
     if(decisions.length){
       decisions.forEach(x=>{ html.push(`<div class="todo-item"><span class="dot" style="background:#ef4444"></span><div class="t-content"><b>${x.work_item_name}</b>：${x.content}</div></div>`); });
-    } else { html.push('<div style="font-size:12px;color:#999">暂无</div>'); }
+    } else { html.push('<div style="font-size:13px;color:#999">暂无</div>'); }
     html.push('</div></div>');
   }
 
@@ -1002,7 +1285,7 @@ async function loadMyFeedback(){
   const panel = document.getElementById('aiPanel');
   if(anns.length){
     panel.classList.remove('hidden');
-    panel.innerHTML = '<h2 style="font-size:15px;margin-bottom:12px">📣 管理者反馈（'+anns.length+'条）</h2>' + anns.map(a=>`
+    panel.innerHTML = '<h2 style="font-size:16px;margin-bottom:12px">📣 管理者反馈（'+anns.length+'条）</h2>' + anns.map(a=>`
       <div class="ai-bubble" style="border-color:#fde68a">
         <div class="b-head"><span class="b-type" style="background:#fef3c7;color:#b45309">反馈</span><span>${a.manager_name||''}</span></div>
         <div class="b-item">${a.content}</div>

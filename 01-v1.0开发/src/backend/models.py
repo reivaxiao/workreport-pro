@@ -148,10 +148,11 @@ class Todo(Base):
     __tablename__ = "todos"
 
     id = Column(Integer, primary_key=True, index=True)
-    content = Column(Text, nullable=False)                 # 待办内容
+    content = Column(Text, nullable=False)                 # 待办内容（下阶段计划）
     owner_id = Column(Integer, ForeignKey("users.id"))    # 责任人
+    work_item_name = Column(String(200), default="")       # 所属工作事项名（按工作汇总用）
     due_date = Column(String(20), default="")             # 截止时间
-    status = Column(String(20), default="进行中")         # 进行中 / 已完成 / 已逾期
+    status = Column(String(20), default="进行中")         # 进行中 / 已完成 / 已取消
     week_start = Column(String(20), default="")           # 来源周
     created_at = Column(DateTime, default=datetime.now)
 
@@ -165,6 +166,17 @@ class KeyWorkText(Base):
     week_start = Column(String(20), nullable=False)              # 周
     content = Column(Text, default="")                           # 管理者修改后的汇报文字
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+
+# ========== 个人待办表（私人便利贴，仅本人可见，完成即消失） ==========
+class PersonalTodo(Base):
+    __tablename__ = "personal_todos"
+
+    id = Column(Integer, primary_key=True, index=True)
+    owner_id = Column(Integer, ForeignKey("users.id"))     # 归属人（仅本人可见）
+    content = Column(Text, nullable=False)                 # 待办内容
+    done = Column(Integer, default=0)                      # 0=未完成 1=已完成（完成后不展示）
+    created_at = Column(DateTime, default=datetime.now)
 
 
 # ========== 反馈规则库（Agent进化） ==========
@@ -262,9 +274,8 @@ def seed_data():
                 "常规招聘交付": ["招聘交付"],
                 "人力成本/人效": ["管控成本/监控人效"],
                 "激励方案": ["激励方案"],
-            },
-            "COE侧重点工作": {
-                "干部盘点": ["干部盘点"],
+                "COE侧工作": ["年度目标", "年度晋升"],
+                "常规/日常工作": ["培训支持", "干部/员工访谈", "劳动合同续签", "劳动争议", "组织及人员异动"],
             },
         }
         for func_name, modules in category_dict.items():
@@ -282,7 +293,7 @@ def seed_data():
         sample_items = [
             WorkItem(name="团队周报管理机制搭建", category="年度重点工作", importance="高",
                      owner_id=1, goal_id=6, target_desc="建立高效的工作汇报系统，实现自动化催办和AI辅助审阅",
-                     due_date="2026-12-31", function="COE侧重点工作", module1="干部盘点", module2="干部盘点"),
+                     due_date="2026-12-31", function="KA-HRBP", module1="COE侧工作", module2="年度目标"),
             WorkItem(name="招聘数字化工具2.0版本建设", category="年度重点工作", importance="高",
                      owner_id=2, goal_id=5, target_desc="重构招聘底层架构，完成系统2.0上线",
                      due_date="2026-12-31", function="招聘COE", module1="招聘系统管理", module2="招聘系统运营"),

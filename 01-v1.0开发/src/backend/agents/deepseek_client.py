@@ -262,3 +262,43 @@ def build_annotation_target_messages(content, member_names):
         {"role": "system", "content": ANNOTATION_TARGET_SYSTEM_PROMPT},
         {"role": "user", "content": user_content},
     ]
+
+
+# ========== 待办提取 ==========
+
+TODO_EXTRACT_SYSTEM_PROMPT = """你是一位 HR 团队的助理，负责从员工的周报「下阶段计划」里提取待办事项，供管理者在周会上逐一确认。
+
+任务：按「具体工作事项」汇总待办，而不是拆成一堆零散的小动作。
+
+规则：
+1. **一个工作事项对应一条待办**：把同一个工作事项下的下阶段计划，汇总成一条结构化待办。不要把一件事拆成多条细碎的小动作。
+2. 待办内容（content）用一句话概括该工作下周要做的核心动作，保留关键信息（如"持续开展招聘、跟进保温礼品、完成签约账号申请"）。
+3. work_item_name 填这个工作事项的名称（从输入里的【事项名】取）。
+4. 每条待办默认责任人 = 写这条计划的人自己（用输入的 owner_name）。
+5. 截止时间：只有文字里明确提到日期（如"下周三前""5月22日"）才填 due_date，格式 YYYY-MM-DD（能推断年份就补全，推断不出留空）。没提就留空 ""。
+6. 如果下阶段计划是空的或只是泛泛而谈（如"持续推进""按计划进行"），就不要硬提取。
+7. 措辞保留原意、可执行，不臆造细节。
+
+## 输出格式（必须是合法的 JSON 数组）
+
+[
+  {"work_item_name": "工作事项名", "content": "下周核心待办一句话", "due_date": "YYYY-MM-DD 或空字符串"}
+]
+
+如果没有可提取的待办，返回 []。"""
+
+
+def build_todo_extract_messages(owner_name, next_plans):
+    """构造待办提取的对话消息。next_plans: [{"item_name":..., "next_plan":...}, ...]"""
+    lines = []
+    for i, p in enumerate(next_plans):
+        lines.append(f"{i+1}. 【{p.get('item_name','')}】{p.get('next_plan','') or '（未填写）'}")
+    user_content = f"""请从以下员工（{owner_name}）本周周报的「下阶段计划」里，按工作事项汇总提取待办。
+
+{chr(10).join(lines)}
+
+请返回 JSON 数组，每条待办含 work_item_name、content 和 due_date。"""
+    return [
+        {"role": "system", "content": TODO_EXTRACT_SYSTEM_PROMPT},
+        {"role": "user", "content": user_content},
+    ]
