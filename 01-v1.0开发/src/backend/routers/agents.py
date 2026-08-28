@@ -44,7 +44,10 @@ def compute_status(item: WorkItem) -> str:
     today = datetime.now().strftime("%Y-%m-%d")
     if today > item.due_date:
         return "延期"
-    due = datetime.strptime(item.due_date, "%Y-%m-%d")
+    try:
+        due = datetime.strptime(item.due_date, "%Y-%m-%d")
+    except ValueError:
+        return "进行中"
     if (due - datetime.now()).days <= 7:
         return "临期"
     return "进行中"
@@ -419,10 +422,13 @@ def agent_dashboard(week_start: Optional[str] = None, db: Session = Depends(get_
 
     users = db.query(User).all()
     items = db.query(WorkItem).all()
+    # 活跃事项（未办结）：用于关键数据、重点工作、日常明细
+    # 已完成的事项只体现在目标考核（永久保留），不再出现在周报/汇报视图的工作明细里
+    active_items = [it for it in items if it.status != "已完成"]
 
     # 1. 关键数据（各累计指标汇总）
     key_metrics = {"offer": 0, "onboard": 0, "count": 0, "times": 0, "people": 0}
-    for item in items:
+    for item in active_items:
         if item.is_cumulative:
             cum = calc_cumulative(db, item.id, week_start)
             for k, v in cum.items():
@@ -550,6 +556,7 @@ def agent_dashboard(week_start: Optional[str] = None, db: Session = Depends(get_
 
     members = []
     for u in users:
+        # 日常明细：用全部事项（含已完成），办结后不消失，只是状态变为已完成（可反悔改回）
         u_items = [it for it in items if it.owner_id == u.id]
         member_items = []
         for it in u_items:
@@ -613,9 +620,7 @@ def group_daily_by_module(members):
     tree = {}
     for m in members:
         for it in m["items"]:
-            # 只归日常常规工作（重点/专项已在 goals 里）
-            if it["category"] in ("年度重点工作", "年度专项工作", "自主专项工作"):
-                continue
+            # 日常工作明细显示全部工作（重点/专项也在此展示，同时也在重点工作项目区汇总展示）
             func = it.get("function") or "未分类"
             m1 = it.get("module1") or "未分类"
             m2 = it.get("module2") or it["name"]
@@ -623,6 +628,7 @@ def group_daily_by_module(members):
                 "id": it["id"], "work_item_name": it["name"],
                 "owner_name": m["name"], "avatar_color": m["avatar_color"],
                 "status": it["status"], "importance": it["importance"],
+                "category": it.get("category", ""),
                 "cum_value": it["cum_value"], "is_cumulative": it["is_cumulative"],
                 "target_desc": it.get("target_desc", ""),
                 "due_date": it.get("due_date", ""),
@@ -682,6 +688,44 @@ def agent_check_status(week_start: Optional[str] = None, db: Session = Depends(g
             not_submitted.append({"name": user.name, "role": user.role, "business_line": user.business_line})
     return {"week_start": week_start, "all_submitted": len(not_submitted) == 0,
             "submitted": submitted, "not_submitted": not_submitted, "total": len(users)}
+
+
+# ========== 例会办结（管理者确认已完成） ==========
+class CompleteRequest(BaseModel):
+    manager_id: int
+    week_start: Optional[str] = None
+
+
+@router.post("/agent/items/{item_id}/complete")
+def complete_item(item_id: int, data: CompleteRequest, db: Session = Depends(get_db)):
+    """管理者在例会上确认某工作事项已完成，办结归档。
+    办结后：status=已完成，记录完成周，周报不再出现，目标考核永久保留。"""
+    manager = db.query(User).filter(User.id == data.manager_id).first()
+    if not manager or not manager.is_manager:
+        return {"success": False, "message": "仅业务管理者可办结"}
+    item = db.query(WorkItem).filter(WorkItem.id == item_id).first()
+    if not item:
+        return {"success": False, "message": "事项不存在"}
+    week_start = data.week_start or get_current_week_start()
+    item.status = "已完成"
+    item.completed_week = week_start
+    db.commit()
+    return {"success": True, "message": f"「{item.name}」已办结"}
+
+
+@router.post("/agent/items/{item_id}/follow")
+def follow_item(item_id: int, data: CompleteRequest, db: Session = Depends(get_db)):
+    """管理者在例会上将已办结的工作改回"继续跟进"（进行中），反悔操作。"""
+    manager = db.query(User).filter(User.id == data.manager_id).first()
+    if not manager or not manager.is_manager:
+        return {"success": False, "message": "仅业务管理者可操作"}
+    item = db.query(WorkItem).filter(WorkItem.id == item_id).first()
+    if not item:
+        return {"success": False, "message": "事项不存在"}
+    item.status = "进行中"
+    item.completed_week = ""
+    db.commit()
+    return {"success": True, "message": f"「{item.name}」已改回继续跟进"}
 
 
 # ========== 待办 ==========

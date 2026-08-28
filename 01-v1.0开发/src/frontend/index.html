@@ -92,7 +92,12 @@ body::before{content:'';position:fixed;top:0;left:0;right:0;height:320px;backgro
 .tag-cat-key{background:var(--c-navy-100);color:var(--c-navy-800)}
 .tag-cat-self{background:#dbeafe;color:#1d4ed8}
 .tag-cat-normal{background:#f1f5f9;color:var(--c-muted)}
+.tag-cat-special{background:#ede9fe;color:#7c3aed}
+.tag-cat-daily{background:#e6f7ef;color:#0f766e}
 .tag-cum{background:var(--c-navy-100);color:var(--c-navy-800)}
+.due-input{font-size:12px;color:#555;border:1px solid #e2e6ee;border-radius:6px;padding:2px 6px;font-family:inherit;background:#fff;cursor:pointer}
+.due-input:hover{border-color:var(--c-navy-600)}
+.due-input:focus{outline:none;border-color:var(--c-navy-600)}
 
 /* 表格形式周报 */
 .table-wrap{overflow-x:auto;background:var(--c-card);border-radius:var(--r-lg);box-shadow:var(--shadow-md);border:1px solid rgba(228,231,238,.6)}
@@ -264,6 +269,17 @@ table.report td textarea:focus{border-color:var(--c-navy-600);outline:none;backg
 
 .ann-mini{font-size:12px;color:var(--c-navy-800);background:none;border:1px dashed #bccae0;border-radius:6px;padding:3px 8px;cursor:pointer;margin-left:auto;transition:all .15s}
 .ann-mini:hover{background:var(--c-navy-50);border-color:var(--c-navy-600)}
+.ann-mini.ann-done{color:var(--c-green);border-color:#86d0a8;margin-left:0}
+.ann-mini.ann-done:hover{background:#dcfce7;border-color:var(--c-green)}
+.ann-mini.ann-confirm{color:#dc2626;border-color:#f0a5a5;margin-left:0;background:#fee2e2}
+.ann-mini.ann-follow{color:var(--c-blue);border-color:#a7c3f0;margin-left:0}
+.ann-mini.ann-follow:hover{background:#dbeafe;border-color:var(--c-blue)}
+
+/* 顶部 toast 提示 */
+.toast{position:fixed;top:76px;left:50%;transform:translateX(-50%);z-index:300;background:var(--c-navy-900);color:#fff;padding:12px 22px;border-radius:10px;font-size:14px;box-shadow:var(--shadow-lg);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;max-width:80vw}
+.toast.show{opacity:1}
+.toast.success{background:var(--c-green)}
+.toast.error{background:var(--c-red)}
 
 /* 日常明细分组：职能 → 一级模块 → 二级模块 → 人 */
 .func-block{background:var(--c-card);border-radius:var(--r-lg);box-shadow:var(--shadow-sm);padding:16px 20px;margin-bottom:16px;border:1px solid rgba(228,231,238,.6)}
@@ -692,7 +708,7 @@ function switchPage(page){
 }
 
 function stBadge(status){ return `<span class="st ${ST_CLASS[status]||'st-doing'}">${ST_ICON[status]||'●'} ${status}</span>`; }
-function catTag(cat){ const m={'年度重点工作':'tag-cat-key','自主专项工作':'tag-cat-self','常规工作':'tag-cat-normal'}; return `<span class="tag ${m[cat]||'tag-cat-normal'}">${cat}</span>`; }
+function catTag(cat){ const m={'年度重点工作':'tag-cat-key','自主专项工作':'tag-cat-self','年度专项工作':'tag-cat-special','日常常规工作':'tag-cat-daily','常规工作':'tag-cat-normal'}; return `<span class="tag ${m[cat]||'tag-cat-normal'}">${cat}</span>`; }
 function impTag(imp){ const m={'高':'tag-high','中':'tag-mid','低':'tag-low'}; return `<span class="tag ${m[imp]||'tag-mid'}">${imp||'中'}</span>`; }
 
 // ========== 周报填写（表格） ==========
@@ -779,7 +795,7 @@ async function loadReport(){
       <td class="col-name">
         <div style="font-weight:700">${d.work_item_name}</div>
         <div style="margin-top:3px">${catTag(d.category)} ${impTag(d.importance)} ${stBadge(d.status)} ${d.is_cumulative?'<span class="tag tag-cum">累计制</span>':''}</div>
-        <div style="font-size:12px;color:#888;margin-top:3px">${d.due_date?'截止 '+d.due_date:''}</div>
+        <div style="font-size:12px;color:#888;margin-top:3px">截止 <input type="date" class="due-input" data-item-id="${d.work_item_id}" value="${d.due_date||''}" onchange="updateDueDate(this)"></div>
         ${goalFoldHtml(d)}
         ${attHtml}
       </td>
@@ -804,6 +820,23 @@ function alignTextareas(){
     const h = nameCell ? nameCell.offsetHeight - 24 : 0;
     tr.querySelectorAll('textarea').forEach(ta=>{ ta.style.height = Math.max(h, 60) + 'px'; });
   });
+}
+
+// ========== 员工自主修改截止时间 ==========
+async function updateDueDate(input){
+  const itemId = parseInt(input.dataset.itemId);
+  const dueDate = input.value || '';
+  try{
+    const r = await fetch(`/api/items/${itemId}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({due_date:dueDate})});
+    const res = await r.json();
+    if(res.message){
+      showToast('✓ 截止时间已更新', 'success');
+    } else if(res.error){
+      showToast(res.error, 'error');
+    }
+  }catch(e){
+    showToast('更新失败，请重试', 'error');
+  }
 }
 
 async function uploadAttachment(btn){
@@ -1208,13 +1241,13 @@ function renderDashContent(){
       const attHtml = (it.attachments && it.attachments.length)
         ? `<div class="kw-atts">${it.attachments.map(a=>`<a class="att-link" href="/api/attachments/${a.id}/download" target="_blank">📎 ${a.filename}</a>`).join('')}</div>`
         : '';
-      // 操作按钮（管理者）：编辑文字 + 上传附件
+      // 操作按钮（重点工作：只做进度呈现，编辑文字 + 上传附件）
       const opsHtml = `<div class="kw-ops">
         <button class="ann-mini" style="margin-left:0" onclick="editKeyWorkText(${idx})">✏️ 编辑文字</button>
         <button class="ann-mini" onclick="uploadKeyAtt(this)">📎 上传附件</button>
         <input type="file" style="display:none" onchange="doUploadKeyAtt(this, ${idx})">
       </div>`;
-      html.push(`<div class="key-item" data-item-id="${it.id}" data-item-name="${it.name}"><div class="w-main"><span class="ki-name">${it.name}</span>${impTag(it.importance)}${stBadge(it.status)}<span style="font-size:12px;color:#888">${it.owner_names}${it.due_date?' · 截止'+it.due_date:''}</span>${cumTxt?`<span class="ki-cum">${cumTxt}</span>`:''}${bodyHtml}${attHtml}</div>${opsHtml}</div>`);
+      html.push(`<div class="key-item" data-item-id="${it.id}" data-item-name="${it.name}"><div class="w-main"><span class="ki-name">${it.name}</span>${catTag(it.category)}${impTag(it.importance)}${stBadge(it.status)}<span style="font-size:12px;color:#888">${it.owner_names}${it.due_date?' · 截止'+it.due_date:''}</span>${cumTxt?`<span class="ki-cum">${cumTxt}</span>`:''}${bodyHtml}${attHtml}</div>${opsHtml}</div>`);
     });
   }
 
@@ -1234,7 +1267,11 @@ function renderDashContent(){
               ${w.progress?`<div class="w-detail"><span class="wd-label">本周成果/下阶段</span>${w.progress}${w.next_plan?' / '+w.next_plan:''}</div>`:''}
               ${w.due_date?`<div class="w-detail"><span class="wd-label">截止</span>${w.due_date}</div>`:''}
               ${w.blockers?`<div class="w-detail"><span class="wd-label">需支持</span>${w.blockers}</div>`:''}`;
-            html.push(`<div class="key-item" data-item-id="${w.id}" data-item-name="${w.work_item_name}"><span class="m-avatar" style="background:${w.avatar_color}">${(w.owner_name||'?')[0]}</span><div class="w-main"><span class="ki-name">${w.work_item_name}</span>${stBadge(w.status)}<span style="font-size:12px;color:#888">${w.owner_name}</span>${cumTxt?`<span class="ki-cum">${cumTxt}</span>`:''}${detail}</div><button class="ann-mini" onclick="toggleAnnotate(this)">✎ 批注</button></div>`);
+            // 操作按钮：批注 + 办结/继续跟进（已完成则显示"继续跟进"反悔）
+            const actionBtns = w.status === '已完成'
+              ? `<button class="ann-mini" onclick="toggleAnnotate(this)">✎ 批注</button><button class="ann-mini ann-follow" onclick="followItem(this, ${w.id}, '${w.work_item_name}')">↩ 继续跟进</button>`
+              : `<button class="ann-mini" onclick="toggleAnnotate(this)">✎ 批注</button><button class="ann-mini ann-follow" onclick="followItem(this, ${w.id}, '${w.work_item_name}')">→ 继续跟进</button><button class="ann-mini ann-done" onclick="completeItem(this, ${w.id}, '${w.work_item_name}')">✓ 办结</button>`;
+            html.push(`<div class="key-item" data-item-id="${w.id}" data-item-name="${w.work_item_name}"><span class="m-avatar" style="background:${w.avatar_color}">${(w.owner_name||'?')[0]}</span><div class="w-main"><span class="ki-name">${w.work_item_name}</span>${catTag(w.category)}${stBadge(w.status)}<span style="font-size:12px;color:#888">${w.owner_name}</span>${cumTxt?`<span class="ki-cum">${cumTxt}</span>`:''}${detail}</div>${actionBtns}</div>`);
           });
           html.push('</div>');
         });
@@ -1353,6 +1390,88 @@ async function submitInlineAnnotation(btn, itemId){
     result.textContent = '✓ 已发布（未点名，参与该工作的人可见）';
   }
   setTimeout(()=>box.remove(), 1500);
+}
+
+// ========== 例会办结（管理者确认已完成） ==========
+function showToast(msg, type){
+  let t = document.getElementById('toast');
+  if(!t){
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.className = 'toast';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.className = 'toast show ' + (type || '');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>{ t.classList.remove('show'); }, 2600);
+}
+
+function completeItem(btn, itemId, itemName){
+  // 两段式确认：第一次点击进入"确认办结？"，3秒内再点才真正办结
+  if(!btn.dataset.confirming){
+    btn.dataset.confirming = '1';
+    btn.textContent = '确认办结？';
+    btn.classList.add('ann-confirm');
+    clearTimeout(btn._timer);
+    btn._timer = setTimeout(()=>{
+      btn.dataset.confirming = '';
+      btn.textContent = '✓ 办结';
+      btn.classList.remove('ann-confirm');
+    }, 3000);
+    return;
+  }
+  doComplete(itemId, itemName, btn);
+}
+
+async function doComplete(itemId, itemName, btn){
+  const r = await fetch(`/api/agent/items/${itemId}/complete`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({manager_id:currentUser.id, week_start:WEEK_START})});
+  const res = await r.json();
+  if(res.success){
+    showToast(`✓ 「${itemName}」已办结为已完成`, 'success');
+    setTimeout(()=>loadDashboard(), 600);
+  } else {
+    showToast(res.message || '办结失败', 'error');
+    // 还原按钮
+    if(btn){
+      btn.dataset.confirming = '';
+      btn.textContent = '✓ 办结';
+      btn.classList.remove('ann-confirm');
+    }
+  }
+}
+
+// ========== 继续跟进（进行中：确认反馈；已完成：反悔改回进行中） ==========
+function followItem(btn, itemId, itemName){
+  const row = btn.closest('.key-item');
+  const name = itemName || (row ? (row.dataset.itemName || '') : '');
+  // 判断当前是否已完成（按钮文字是"↩ 继续跟进"表示已完成状态）
+  if(btn.textContent.indexOf('↩') >= 0){
+    // 反悔：已完成 → 进行中
+    fetch(`/api/agent/items/${itemId}/follow`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({manager_id:currentUser.id, week_start:WEEK_START})})
+      .then(r=>r.json()).then(res=>{
+        if(res.success){
+          showToast(`「${name}」已改回继续跟进，下周仍在周报中`, 'success');
+          setTimeout(()=>loadDashboard(), 600);
+        } else {
+          showToast(res.message || '操作失败', 'error');
+        }
+      });
+    return;
+  }
+  // 进行中：仅确认反馈
+  btn.textContent = '✓ 已确认跟进';
+  btn.style.color = '#2563eb';
+  btn.style.borderColor = '#2563eb';
+  btn.style.background = '#dbeafe';
+  showToast(`「${name}」继续跟进，下周仍在周报中`, '');
+  clearTimeout(btn._timer);
+  btn._timer = setTimeout(()=>{
+    btn.textContent = '→ 继续跟进';
+    btn.style.color = '';
+    btn.style.borderColor = '';
+    btn.style.background = '';
+  }, 2600);
 }
 
 // ========== 员工端：查看管理者反馈 ==========

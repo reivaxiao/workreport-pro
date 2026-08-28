@@ -62,7 +62,10 @@ def compute_status(item: WorkItem) -> str:
     if today > item.due_date:
         return "延期"
     # 临期：距截止 ≤ 7 天
-    due = datetime.strptime(item.due_date, "%Y-%m-%d")
+    try:
+        due = datetime.strptime(item.due_date, "%Y-%m-%d")
+    except ValueError:
+        return "进行中"
     if (due - datetime.now()).days <= 7:
         return "临期"
     return "进行中"
@@ -99,6 +102,8 @@ def my_progress(user_id: int, week_start: Optional[str] = None, db: Session = De
         week_start = get_current_week_start()
 
     items = db.query(WorkItem).filter(WorkItem.owner_id == user_id).all()
+    # 已完成的工作不进周报（已完成只体现在目标考核，永久保留）
+    items = [it for it in items if it.status != "已完成"]
     result = []
     for item in items:
         progress = db.query(WeeklyProgress).filter(

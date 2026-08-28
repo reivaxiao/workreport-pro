@@ -85,6 +85,7 @@ class WorkItem(Base):
     is_cumulative = Column(Integer, default=0)             # 是否累计制 0=否 1=是
     cum_metrics = Column(Text, default="[]")               # 累计指标定义(JSON) 如 [{"key":"offer","label":"Offer数","unit":"个"}]
     status = Column(String(20), default="进行中")         # 进行中/已完成/暂停(手动)；临期/延期系统算
+    completed_week = Column(String(20), default="")        # 完成周（管理者例会确认办结时记录）
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
