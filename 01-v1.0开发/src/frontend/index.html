@@ -98,6 +98,8 @@ body::before{content:'';position:fixed;top:0;left:0;right:0;height:320px;backgro
 .due-input{font-size:12px;color:#555;border:1px solid #e2e6ee;border-radius:6px;padding:2px 6px;font-family:inherit;background:#fff;cursor:pointer}
 .due-input:hover{border-color:var(--c-navy-600)}
 .due-input:focus{outline:none;border-color:var(--c-navy-600)}
+.week-btn{font-size:12px;color:#1d2f52;background:#f0f3f8;border:1px solid #d8dfe9;border-radius:6px;padding:3px 10px;cursor:pointer;font-family:inherit;transition:all .15s}
+.week-btn:hover{background:#1d2f52;color:#fff;border-color:#1d2f52}
 
 /* 表格形式周报 */
 .table-wrap{overflow-x:auto;background:var(--c-card);border-radius:var(--r-lg);box-shadow:var(--shadow-md);border:1px solid rgba(228,231,238,.6)}
@@ -462,7 +464,11 @@ table.report td textarea:focus{border-color:var(--c-navy-600);outline:none;backg
         <span class="title-bar"></span>
         <div>
           <h2 style="margin:0">管理者汇报视图 <span style="font-size:13px;color:#888;font-weight:400" id="dashWeekLabel"></span></h2>
-          <div class="page-sub">全员工作汇总 · 待办回溯 · AI 总结</div>
+          <div class="page-sub" style="display:flex;align-items:center;gap:8px">
+            <button class="week-btn" onclick="shiftWeek(-1)">◀ 上一周</button>
+            <button class="week-btn" onclick="shiftWeek(0)">本周</button>
+            <button class="week-btn" onclick="shiftWeek(1)">下一周 ▶</button>
+          </div>
         </div>
       </div>
       <button class="btn btn-outline btn-sm" id="btnGenSummary" onclick="generateSummary()">一键 AI 总结</button>
@@ -561,6 +567,9 @@ table.report td textarea:focus{border-color:var(--c-navy-600);outline:none;backg
 <script>
 let currentUser = null, allUsers = [], allGoals = [], allItems = [];
 const WEEK_START = (() => { const d=new Date(); const day=d.getDay(); const diff=d.getDate()-day+(day===0?-6:1); return new Date(d.setDate(diff)).toISOString().split('T')[0]; })();
+// 汇报视图的查看周：默认「上一周」（周一开例会回溯上周成果）
+function mondayOf(dateStr){ const d=new Date(dateStr); const day=d.getDay(); d.setDate(d.getDate()-day+(day===0?-6:1)); return d.toISOString().split('T')[0]; }
+let viewWeek = (() => { const d=new Date(WEEK_START); d.setDate(d.getDate()-7); return d.toISOString().split('T')[0]; })();
 const ST_CLASS = {'已完成':'st-done','进行中':'st-doing','临期':'st-warn','延期':'st-delay','暂停':'st-stop','终止':'st-stop'};
 const ST_ICON = {'已完成':'✓','进行中':'●','临期':'⚠','延期':'⏰','暂停':'⛔','终止':'⛔'};
 
@@ -997,13 +1006,26 @@ async function addItem(){
   hideAddItem(); loadReport();
 }
 
+// ========== 周切换 ==========
+function shiftWeek(delta){
+  if(delta === 0){
+    viewWeek = WEEK_START;  // 回到本周
+  } else {
+    const d = new Date(viewWeek);
+    d.setDate(d.getDate() + delta * 7);
+    viewWeek = d.toISOString().split('T')[0];
+  }
+  loadDashboard();
+  if(document.getElementById('goalReviewContent')){ loadGoalReview(); }
+}
+
 // ========== 汇报视图 ==========
 let dashData = null;       // 缓存的汇报数据
 let trendChart = null;     // 趋势图实例
 
 async function loadDashboard(){
-  document.getElementById('dashWeekLabel').textContent = `本周: ${WEEK_START}`;
-  dashData = await (await fetch(`/api/agent/dashboard?week_start=${WEEK_START}`)).json();
+  document.getElementById('dashWeekLabel').textContent = `查看: ${viewWeek} 那周`;
+  dashData = await (await fetch(`/api/agent/dashboard?week_start=${viewWeek}`)).json();
 
   // AI 总结横幅（自动生成或读取）
   await loadSummaryBanner();
@@ -1049,7 +1071,7 @@ async function extractTodos(){
   const btn = document.getElementById('btnExtractTodo');
   btn.disabled = true;
   btn.textContent = '提取中…';
-  const r = await (await fetch('/api/agent/extract-todos',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({week_start:WEEK_START})})).json();
+  const r = await (await fetch('/api/agent/extract-todos',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({week_start:viewWeek})})).json();
   btn.disabled = false;
   btn.textContent = '提取待办';
   alert(r.message || '提取完成');
@@ -1058,14 +1080,14 @@ async function extractTodos(){
 }
 
 async function reviewTodo(id, action){
-  await fetch(`/api/agent/todos/${id}/review?week_start=${WEEK_START}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action})});
+  await fetch(`/api/agent/todos/${id}/review?week_start=${viewWeek}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action})});
   await loadTodoReview();
 }
 
 async function loadGoalReview(){
-  document.getElementById('goalWeekLabel').textContent = `本周: ${WEEK_START}`;
+  document.getElementById('goalWeekLabel').textContent = `查看: ${viewWeek} 那周`;
   // 复用 dashboard 的 goal_review 数据（若未加载则重新拉取）
-  if(!dashData){ dashData = await (await fetch(`/api/agent/dashboard?week_start=${WEEK_START}`)).json(); }
+  if(!dashData){ dashData = await (await fetch(`/api/agent/dashboard?week_start=${viewWeek}`)).json(); }
   const goalReview = dashData.goal_review || [];
   const container = document.getElementById('goalReviewContent');
   if(!goalReview.length){
@@ -1076,7 +1098,8 @@ async function loadGoalReview(){
     const aggCum = gr.agg_cum && Object.keys(gr.agg_cum).length ? Object.entries(gr.agg_cum).map(([k,v])=>`${k}:${v}`).join(' ') : '';
     const works = gr.works.map(w=>{
       const wCum = w.is_cumulative && w.cum_value ? Object.entries(w.cum_value).map(([k,v])=>`${k}:${v}`).join(' ') : '';
-      return `<div class="key-item"><span class="ki-name">${w.name}</span>${stBadge(w.status)}<span style="font-size:12px;color:#888">${w.owner_name}</span>${wCum?`<span class="ki-cum">${wCum}</span>`:''}${w.progress?`<div class="w-detail"><span class="wd-label">本周进展</span>${w.progress}</div>`:''}</div>`;
+      const undoBtn = w.status === '已完成' ? `<button class="ann-mini ann-follow" onclick="undoComplete(${w.id}, '${w.name}')">↩ 撤销完成</button>` : '';
+      return `<div class="key-item"><span class="ki-name">${w.name}</span>${stBadge(w.status)}<span style="font-size:12px;color:#888">${w.owner_name}</span>${wCum?`<span class="ki-cum">${wCum}</span>`:''}${w.progress?`<div class="w-detail"><span class="wd-label">本周进展</span>${w.progress}</div>`:''}${undoBtn}</div>`;
     }).join('');
     return `<div class="card">
       <div class="goal-head" style="display:flex;align-items:center;gap:8px;font-size:16px;font-weight:700;color:#1a1a1a;margin-bottom:6px">
@@ -1148,7 +1171,7 @@ async function loadSummaryBanner(){
   const text = document.getElementById('dashSummaryText');
   try{
     // 只读取已保存的汇报稿；没有则隐藏横幅，等管理者点"一键AI总结"
-    const r = await (await fetch(`/api/agent/get-summary?week_start=${WEEK_START}`)).json();
+    const r = await (await fetch(`/api/agent/get-summary?week_start=${viewWeek}`)).json();
     if(r.content && r.content.trim()){
       banner.classList.remove('hidden');
       text.innerHTML = r.content.replace(/\n/g,'<br>');
@@ -1172,7 +1195,7 @@ async function generateSummary(){
   text.innerHTML = '<span style="color:#888">AI 正在汇总提炼现有材料，请稍候…</span>';
 
   try{
-    const data = await (await fetch('/api/agent/manager-review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({week_start:WEEK_START})})).json();
+    const data = await (await fetch('/api/agent/manager-review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({week_start:viewWeek})})).json();
     btn.classList.remove('loading');
     btn.innerHTML = '一键 AI 总结';
     if(data.summary){
@@ -1241,10 +1264,12 @@ function renderDashContent(){
       const attHtml = (it.attachments && it.attachments.length)
         ? `<div class="kw-atts">${it.attachments.map(a=>`<a class="att-link" href="/api/attachments/${a.id}/download" target="_blank">📎 ${a.filename}</a>`).join('')}</div>`
         : '';
-      // 操作按钮（重点工作：只做进度呈现，编辑文字 + 上传附件）
+      // 操作按钮（重点工作：进度呈现 + 编辑文字 + 上传附件；已完成则加撤销完成）
+      const undoBtn = it.status === '已完成' ? `<button class="ann-mini ann-follow" onclick="undoComplete(${it.id}, '${it.name}')">↩ 撤销完成</button>` : '';
       const opsHtml = `<div class="kw-ops">
         <button class="ann-mini" style="margin-left:0" onclick="editKeyWorkText(${idx})">✏️ 编辑文字</button>
         <button class="ann-mini" onclick="uploadKeyAtt(this)">📎 上传附件</button>
+        ${undoBtn}
         <input type="file" style="display:none" onchange="doUploadKeyAtt(this, ${idx})">
       </div>`;
       html.push(`<div class="key-item" data-item-id="${it.id}" data-item-name="${it.name}"><div class="w-main"><span class="ki-name">${it.name}</span>${catTag(it.category)}${impTag(it.importance)}${stBadge(it.status)}<span style="font-size:12px;color:#888">${it.owner_names}${it.due_date?' · 截止'+it.due_date:''}</span>${cumTxt?`<span class="ki-cum">${cumTxt}</span>`:''}${bodyHtml}${attHtml}</div>${opsHtml}</div>`);
@@ -1313,7 +1338,7 @@ function editKeyWorkText(idx){
   const newText = prompt(`编辑「${it.name}」的汇报文字（不影响员工原始周报）：`, cur);
   if(newText === null) return;  // 取消
   fetch('/api/agent/key-work-text',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-    work_item_id: it.id, week_start: WEEK_START, content: newText
+    work_item_id: it.id, week_start: viewWeek, content: newText
   })}).then(()=>{
     it.custom_text = newText;
     renderDashContent();
@@ -1335,12 +1360,12 @@ async function doUploadKeyAtt(input, idx){
   const fd = new FormData();
   fd.append('file', file);
   fd.append('work_item_id', it.id);
-  fd.append('week_start', WEEK_START);
+  fd.append('week_start', viewWeek);
   fd.append('uploaded_by', currentUser.id);
   await fetch('/api/attachments',{method:'POST',body:fd});
   input.value = '';
   // 刷新数据
-  dashData = await (await fetch(`/api/agent/dashboard?week_start=${WEEK_START}`)).json();
+  dashData = await (await fetch(`/api/agent/dashboard?week_start=${viewWeek}`)).json();
   renderDashContent();
 }
 
@@ -1381,7 +1406,7 @@ async function submitInlineAnnotation(btn, itemId){
   const box = btn.closest('.ann-inline');
   const content = box.querySelector('.ann-inline-ta').value.trim();
   if(!content){ alert('请填写批注内容'); return; }
-  const r = await fetch('/api/annotations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({manager_id:currentUser.id, week_start:WEEK_START, work_item_id:itemId, content})});
+  const r = await fetch('/api/annotations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({manager_id:currentUser.id, week_start:viewWeek, work_item_id:itemId, content})});
   const res = await r.json();
   const result = box.querySelector('.ann-inline-result');
   if(res.target_user_name){
@@ -1425,7 +1450,7 @@ function completeItem(btn, itemId, itemName){
 }
 
 async function doComplete(itemId, itemName, btn){
-  const r = await fetch(`/api/agent/items/${itemId}/complete`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({manager_id:currentUser.id, week_start:WEEK_START})});
+  const r = await fetch(`/api/agent/items/${itemId}/complete`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({manager_id:currentUser.id, week_start:viewWeek})});
   const res = await r.json();
   if(res.success){
     showToast(`✓ 「${itemName}」已办结为已完成`, 'success');
@@ -1448,7 +1473,7 @@ function followItem(btn, itemId, itemName){
   // 判断当前是否已完成（按钮文字是"↩ 继续跟进"表示已完成状态）
   if(btn.textContent.indexOf('↩') >= 0){
     // 反悔：已完成 → 进行中
-    fetch(`/api/agent/items/${itemId}/follow`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({manager_id:currentUser.id, week_start:WEEK_START})})
+    fetch(`/api/agent/items/${itemId}/follow`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({manager_id:currentUser.id, week_start:viewWeek})})
       .then(r=>r.json()).then(res=>{
         if(res.success){
           showToast(`「${name}」已改回继续跟进，下周仍在周报中`, 'success');
@@ -1472,6 +1497,18 @@ function followItem(btn, itemId, itemName){
     btn.style.borderColor = '';
     btn.style.background = '';
   }, 2600);
+}
+
+// ========== 撤销完成（已完成 → 进行中），用于目标考核/重点工作项目 ==========
+async function undoComplete(itemId, itemName){
+  const r = await fetch(`/api/agent/items/${itemId}/follow`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({manager_id:currentUser.id, week_start:viewWeek})});
+  const res = await r.json();
+  if(res.success){
+    showToast(`「${itemName}」已撤销完成，改回继续跟进`, 'success');
+    setTimeout(()=>loadDashboard(), 600);
+  } else {
+    showToast(res.message || '操作失败', 'error');
+  }
 }
 
 // ========== 员工端：查看管理者反馈 ==========

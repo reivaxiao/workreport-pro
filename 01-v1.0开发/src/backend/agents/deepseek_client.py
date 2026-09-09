@@ -14,36 +14,35 @@ def get_client():
     return _client
 
 
-def chat(messages, model=None, temperature=0.4, max_tokens=2000):
+def chat(messages, model=None, temperature=0.4, max_tokens=2000, no_think=False):
     """通用对话调用，返回文本内容。
-    若 content 为空（推理型模型思考占用全部 token 导致正式答案被截断），
-    自动用更大 max_tokens 重试一次。
+    no_think=True 时关闭推理思考（thinking disabled），适合整理归纳类任务，速度大幅提升。
     """
     client = get_client()
-    resp = client.chat.completions.create(
+    kwargs = dict(
         model=model or config.DEEPSEEK_MODEL,
         messages=messages,
         temperature=temperature,
         max_tokens=max_tokens,
         stream=False,
     )
+    if no_think:
+        # deepseek v4 正确关闭思考的参数（enable_thinking 会被忽略，必须用 thinking disabled）
+        kwargs["extra_body"] = {"thinking": {"type": "disabled"}}
+    resp = client.chat.completions.create(**kwargs)
     content = resp.choices[0].message.content or ""
     # 若正式答案为空且被截断，加大 token 重试
     if not content.strip() and resp.choices[0].finish_reason == "length":
-        resp = client.chat.completions.create(
-            model=model or config.DEEPSEEK_MODEL,
-            messages=messages,
-            temperature=temperature,
-            max_tokens=max(max_tokens * 2, 8000),
-            stream=False,
-        )
+        retry_kwargs = dict(kwargs)
+        retry_kwargs["max_tokens"] = max(max_tokens * 2, 8000)
+        resp = client.chat.completions.create(**retry_kwargs)
         content = resp.choices[0].message.content or ""
     return content
 
 
-def chat_json(messages, model=None, temperature=0.2, max_tokens=3000):
+def chat_json(messages, model=None, temperature=0.2, max_tokens=3000, no_think=False):
     """调用并要求返回 JSON，解析失败返回 None"""
-    text = chat(messages, model=model, temperature=temperature, max_tokens=max_tokens)
+    text = chat(messages, model=model, temperature=temperature, max_tokens=max_tokens, no_think=no_think)
     if not text:
         return None
     text = text.strip()
@@ -194,11 +193,24 @@ MANAGER_REVIEW_SYSTEM_PROMPT = """你是一位资深的人力资源总监，正�
 2. **再讲重点项目**：团队在推进哪些年度重点/专项工作，各自进展到哪一步，下阶段计划是什么。
 3. **最后一句带过日常事务**：员工访谈、入转调离、培训等常规事务性工作，简单一句概括即可，不展开。
 
+## 铁律：不遗漏（最重要，违反即不合格）
+
+- 输入里每一条工作前面都有【分类标签】（年度重点工作 / 年度专项工作 / 日常常规工作）。
+- 你生成的汇报稿，**必须覆盖输入里的每一条工作内容，一条都不能丢**。
+- 【年度专项工作】和【年度重点工作】都是重点项目，必须逐条写到"重点项目"段落里，哪怕某条只是"刚启动、在规划阶段"，也要把它写进去，明确写出它是什么、进展到哪一步。
+- 【日常常规工作】可以在"日常事务"段落里概括合并，但也必须全部点到，不能消失。
+- 写完后自查：输入里有 N 条工作，你的汇报稿里就必须能看到这 N 条工作都被提及。发现漏了就是错的，重写。
+
+## 分类判断依据（用标签，不要靠猜）
+
+- 每条工作都带【分类标签】，请严格依据标签分类，不要凭工作名字自行判断重要性。
+- 标【年度专项工作】或【年度重点工作】的，一律按重点项目处理，逐条详写。
+- 标【日常常规工作】的，按日常事务处理，可概括。
+
 语言要求：
 - 是"向上级汇报"的正式口吻，简洁有力，像一份成熟的 HR 周报，不是流水账。
 - 用板块/维度组织（营销、产研、运营、COE 等），读起来有层次。
 - 结尾可点出"需关注/需决策"的事项（如果有）。
-- 你要有 HR 的专业判断力：能区分什么是"重点工作"（招聘交付、重点项目）什么是"常规事务"（访谈、入转调离），并据此决定详略。
 
 ## 审阅维度（suggestions）
 

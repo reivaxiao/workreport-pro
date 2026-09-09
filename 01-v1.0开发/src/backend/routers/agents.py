@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from pydantic import BaseModel
 from typing import Optional, List
 import json
+import re
 
 router = APIRouter()
 
@@ -247,6 +248,73 @@ class ManagerReviewRequest(BaseModel):
     week_start: str
 
 
+def _clean_progress(p):
+    """去掉进度里的【xxxx-xxxx周报】历史标记，只保留最新一段"""
+    segs = re.split(r'【\d{4}-\d{4}周报】', p)
+    return segs[-1].strip() if segs else p
+
+
+_DELETE_MARKERS = ('此条目可删除', '此条可删除', '该条目可删除', '可删除', '此条删除', '删除')
+
+
+def _is_deleted_marker(p):
+    """判断进度内容是否为无意义的'删除标记'（如员工写的'此条目可删除'）"""
+    t = _clean_progress(p).strip('。．. ')
+    return t in _DELETE_MARKERS
+
+
+def _merge_by_name(entries):
+    """按工作事项名称合并同名条目（保持首次出现顺序）"""
+    merged, order = {}, []
+    for e in entries:
+        n = e['name']
+        if n not in merged:
+            merged[n] = []
+            order.append(n)
+        merged[n].append(e)
+    return [(n, merged[n]) for n in order]
+
+
+def _build_draft(special, key, daily):
+    """系统按分类标签拼接周报初稿：同名工作事项合并为一条、多负责人分列，保证不遗漏"""
+    parts = []
+
+    def render_group(title, entries):
+        if not entries:
+            return
+        parts.append(title)
+        groups = _merge_by_name(entries)
+        for i, (name, es) in enumerate(groups, 1):
+            if len(es) == 1:
+                e = es[0]
+                parts.append(f"{i}. {name}（{e['owner']}·{e['line']}）：{_clean_progress(e['progress'])}")
+            else:
+                owner_names = list(dict.fromkeys([e['owner'] for e in es]))
+                parts.append(f"{i}. {name}（{'、'.join(owner_names)}）：")
+                multi_owner = len(owner_names) > 1
+                for e in es:
+                    if multi_owner:
+                        parts.append(f"   - {e['owner']}（{e['line']}）：{_clean_progress(e['progress'])}")
+                    else:
+                        parts.append(f"   - {_clean_progress(e['progress'])}")
+        parts.append("")
+
+    render_group("一、重点专项工作", special)
+    render_group("二、年度重点工作", key)
+    render_group("三、日常常规工作", daily)
+    return "\n".join(parts)
+
+
+_POLISH_DRAFT_PROMPT = """下面是一份已整理好的团队周报初稿，请把它提炼润色成一份更通顺、简洁的向上级汇报稿。
+
+要求：
+- 保持「重点专项、年度重点、日常常规」三段结构不变。
+- 保持每条工作事项原有的分组结构不变：同名工作事项已经合并为一条，多个负责人/多条进展用"- 负责人：内容"的子项分列，**不要把它们拆开、也不要重新合并或改动分组**。
+- 所有工作内容都要保留，一条都不能漏。
+- 只做语言润色和精简，不要新增或删减任何事实。
+- 直接输出文字，不要任何前缀、解释或 markdown 标记。"""
+
+
 @router.post("/agent/manager-review")
 def agent_manager_review(data: ManagerReviewRequest, db: Session = Depends(get_db)):
     """管理者一键审阅：审全员周报，返回结构化审阅意见"""
@@ -254,74 +322,59 @@ def agent_manager_review(data: ManagerReviewRequest, db: Session = Depends(get_d
     users = db.query(User).all()
     items = db.query(WorkItem).all()
 
-    # 1. 横向汇总（文本化）
-    summarize = agent_summarize(week_start, db)
-    summarize_text = ""
-    for g in summarize:
-        parts = [f"{m['business_line'] or m['owner_name']}{g['label']}{m['value']}{g['unit']}" for m in g['members'] if m['value'] > 0]
-        if parts:
-            summarize_text += f"- {g['label']}：{'、'.join(parts)}（合计{g['total']}{g['unit']}）\n"
-
-    # 2. 各成员本周工作（文本化）
-    members_text = ""
+    # 1. 收集本周有进度的工作，按分类标签分组
+    special, key, daily = [], [], []
     for u in users:
-        u_items = [it for it in items if it.owner_id == u.id]
-        member_lines = []
-        for it in u_items:
+        for it in [x for x in items if x.owner_id == u.id]:
             prog = db.query(WeeklyProgress).filter(
                 WeeklyProgress.work_item_id == it.id,
                 WeeklyProgress.week_start == week_start).first()
-            if prog and prog.progress.strip():
-                st = compute_status(it)
-                member_lines.append(f"  - {it.name}（{st}）：{prog.progress.strip()[:80]}")
-        if member_lines:
-            members_text += f"{u.name}（{u.business_line or u.role}）：\n" + "\n".join(member_lines) + "\n"
+            if not prog or not prog.progress.strip():
+                continue
+            if _is_deleted_marker(prog.progress):
+                continue
+            entry = {
+                "name": it.name,
+                "owner": u.name,
+                "line": (u.business_line or u.role or ""),
+                "progress": prog.progress.strip(),
+            }
+            if it.category == "年度专项工作":
+                special.append(entry)
+            elif it.category == "年度重点工作":
+                key.append(entry)
+            else:
+                daily.append(entry)
 
-    if not summarize_text and not members_text:
+    if not special and not key and not daily:
         return {"week_start": week_start, "total": 0, "suggestions": []}
 
-    try:
-        from agents.deepseek_client import build_manager_review_messages, chat_json
-        messages = build_manager_review_messages(summarize_text, members_text)
-        # max_tokens 需足够大：推理型模型会先占用大量 token 思考，3000 会导致正式答案被截断
-        result = chat_json(messages, max_tokens=8000)
+    # 2. 系统拼接初稿（保证不遗漏）
+    draft = _build_draft(special, key, daily)
 
-        summary = ""
-        suggestions = []
-        if isinstance(result, dict):
-            # 新格式：{summary, suggestions}
-            summary = result.get("summary", "")
-            raw_suggestions = result.get("suggestions", [])
-            if isinstance(raw_suggestions, list):
-                for r in raw_suggestions:
-                    if isinstance(r, dict) and r.get("message"):
-                        suggestions.append({
-                            "type": r.get("type", "进度"),
-                            "target": r.get("target", ""),
-                            "message": r["message"],
-                        })
-        elif isinstance(result, list):
-            # 兼容旧格式：纯数组
-            for r in result:
-                if isinstance(r, dict) and r.get("message"):
-                    suggestions.append({
-                        "type": r.get("type", "进度"),
-                        "target": r.get("target", ""),
-                        "message": r["message"],
-                    })
-        # 自动保存汇报稿（供汇报视图横幅直接读取）
-        if summary:
-            existing = db.query(WeeklySummary).filter(WeeklySummary.week_start == week_start).first()
-            if existing:
-                existing.content = summary
-            else:
-                db.add(WeeklySummary(week_start=week_start, content=summary))
-            db.commit()
-        return {"week_start": week_start, "summary": summary,
-                "total": len(suggestions), "suggestions": suggestions}
+    # 3. AI 润色（flash + 关思考，秒出；失败则降级用拼装初稿）
+    try:
+        import config
+        from agents.deepseek_client import chat
+        summary = chat(
+            [{"role": "user", "content": _POLISH_DRAFT_PROMPT + "\n\n" + draft}],
+            model=config.DEEPSEEK_MODEL_FAST,
+            max_tokens=4000,
+            no_think=True,
+        ).strip()
     except Exception as e:
-        print(f"[管理者审阅] DeepSeek 调用失败: {e}")
-        return {"week_start": week_start, "summary": "", "total": 0, "suggestions": []}
+        print(f"[管理者审阅] AI 润色失败，降级用拼装初稿: {e}")
+        summary = draft
+
+    # 自动保存汇报稿（供汇报视图横幅直接读取）
+    if summary:
+        existing = db.query(WeeklySummary).filter(WeeklySummary.week_start == week_start).first()
+        if existing:
+            existing.content = summary
+        else:
+            db.add(WeeklySummary(week_start=week_start, content=summary))
+        db.commit()
+    return {"week_start": week_start, "summary": summary, "total": 0, "suggestions": []}
 
 
 # ========== 周汇报稿（保存/读取） ==========
@@ -556,8 +609,8 @@ def agent_dashboard(week_start: Optional[str] = None, db: Session = Depends(get_
 
     members = []
     for u in users:
-        # 日常明细：用全部事项（含已完成），办结后不消失，只是状态变为已完成（可反悔改回）
-        u_items = [it for it in items if it.owner_id == u.id]
+        # 日常明细：已完成的工作不再显示（办结后消失，只保留在目标考核和重点工作项目）
+        u_items = [it for it in items if it.owner_id == u.id and it.status != "已完成"]
         member_items = []
         for it in u_items:
             cum = calc_cumulative(db, it.id, week_start) if it.is_cumulative else {}
