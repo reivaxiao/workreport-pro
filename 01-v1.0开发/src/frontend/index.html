@@ -294,13 +294,13 @@ table.report td textarea:focus{border-color:var(--c-navy-600);outline:none;backg
 .key-item .m-avatar{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;flex-shrink:0}
 
 .key-members{margin-top:6px;padding:6px 10px;background:var(--c-navy-50);border-radius:8px;display:flex;flex-direction:column;gap:4px}
-.km-line{font-size:13px;color:#666}
+.km-line{font-size:13px;color:#666;white-space:pre-line}
 
 .kw-atts{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .kw-ops{display:flex;gap:6px;margin-top:8px;flex-shrink:0;align-items:center}
 
 .w-main{flex:1;min-width:0}
-.w-detail{font-size:13px;color:#666;margin-top:4px;line-height:1.6}
+.w-detail{font-size:13px;color:#666;margin-top:4px;line-height:1.6;white-space:pre-line}
 .wd-label{display:inline-block;font-size:12px;color:var(--c-navy-800);background:var(--c-navy-50);border-radius:4px;padding:0 6px;margin-right:6px}
 
 /* 重点工作 + 目标考核 两栏 */
@@ -808,7 +808,7 @@ async function loadReport(){
         ${goalFoldHtml(d)}
         ${attHtml}
       </td>
-      <td class="col-lastweek"><div style="font-size:13px;color:#666">${d.last_week_progress||'<span style="color:#ccc">无</span>'}</div></td>
+      <td class="col-lastweek"><div style="font-size:13px;color:#666;white-space:pre-line">${d.last_week_progress||'<span style="color:#ccc">无</span>'}</div></td>
       <td class="col-progress">
         <textarea class="p-input" data-field="progress" placeholder="已完成：……&#10;下周计划开展：……">${d.progress||''}</textarea>
         <button class="polish-btn" data-item-id="${d.work_item_id}" onclick="polishText(this)">✨ AI 提炼</button>
