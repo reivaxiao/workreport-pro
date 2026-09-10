@@ -310,6 +310,7 @@ _POLISH_DRAFT_PROMPT = """下面是一份已整理好的团队周报初稿，请
 要求：
 - 保持「重点专项、年度重点、日常常规」三段结构不变。
 - 保持每条工作事项原有的分组结构不变：同名工作事项已经合并为一条，多个负责人/多条进展用"- 负责人：内容"的子项分列，**不要把它们拆开、也不要重新合并或改动分组**。
+- **保留原文的换行与分条**：每条工作内容里原有的换行、以及"1、2、3"或"-"等序号分条，都要原样保留，严禁把多行内容压成一行连续文字。
 - 所有工作内容都要保留，一条都不能漏。
 - 只做语言润色和精简，不要新增或删减任何事实。
 - 直接输出文字，不要任何前缀、解释或 markdown 标记。"""
@@ -841,22 +842,21 @@ def extract_todos(data: TodoExtractRequest, db: Session = Depends(get_db)):
         existing = db.query(Todo).filter(Todo.week_start == week_start, Todo.owner_id == u.id).first()
         if existing:
             continue
-        # 收集该员工本周所有事项的「下阶段计划」
+        # 收集该员工本周所有事项的周报文字（从中识别下阶段计划）
         u_items = [it for it in items if it.owner_id == u.id]
-        next_plans = []
+        progresses = []
         for it in u_items:
             prog = db.query(WeeklyProgress).filter(
                 WeeklyProgress.work_item_id == it.id,
                 WeeklyProgress.week_start == week_start).first()
-            plan = prog.next_plan if prog else ""
-            if plan and plan.strip():
-                next_plans.append({"item_name": it.name, "next_plan": plan})
-        if not next_plans:
+            if prog and prog.progress.strip():
+                progresses.append({"item_name": it.name, "progress": prog.progress.strip()})
+        if not progresses:
             continue
 
         try:
-            messages = build_todo_extract_messages(u.name, next_plans)
-            result = chat_json(messages, max_tokens=2000)
+            messages = build_todo_extract_messages(u.name, progresses)
+            result = chat_json(messages, max_tokens=2000, no_think=True)
         except Exception:
             result = None
 
