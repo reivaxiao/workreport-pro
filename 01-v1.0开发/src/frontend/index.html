@@ -745,6 +745,7 @@ function switchPage(page){
   if(page==='dashboard') loadDashboard();
   if(page==='goal-review') loadGoalReview();
   if(page==='my-todo') loadMyTodos();
+  if(page!=='dashboard') stopDashAutoRefresh();  // 离开汇报视图停止自动刷新
 }
 
 function stBadge(status){ return `<span class="st ${ST_CLASS[status]||'st-doing'}">${ST_ICON[status]||'●'} ${status}</span>`; }
@@ -1095,6 +1096,25 @@ async function loadDashboard(){
 
   // 内容区（重点 + 日常 + 待办决策）
   renderDashContent();
+
+  // 启动 30 秒自动刷新（开会时实时看最新提交）
+  startDashAutoRefresh();
+}
+
+// ========== 汇报视图自动刷新（30秒，仅汇报视图页面） ==========
+let dashTimer = null;
+function startDashAutoRefresh(){
+  stopDashAutoRefresh();
+  dashTimer = setInterval(async () => {
+    const dashPage = document.getElementById('page-dashboard');
+    if(!dashPage || dashPage.classList.contains('hidden')) return;  // 不在汇报视图则不刷
+    const scrollY = window.scrollY;   // 记录滚动位置，刷新后恢复
+    await loadDashboard();
+    window.scrollTo(0, scrollY);
+  }, 30000);
+}
+function stopDashAutoRefresh(){
+  if(dashTimer){ clearInterval(dashTimer); dashTimer = null; }
 }
 
 // ========== 上周待办回溯 ==========
