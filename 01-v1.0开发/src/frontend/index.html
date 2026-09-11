@@ -50,6 +50,8 @@ body::before{content:'';position:fixed;top:0;left:0;right:0;height:320px;backgro
 .topbar .user:hover{background:rgba(255,255,255,.14)}
 .topbar .user .avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:700;background:rgba(255,255,255,.22);box-shadow:0 0 0 2px rgba(255,255,255,.18)}
 .topbar .user .caret{font-size:11px;opacity:.7;transition:transform .15s}
+.app-version{font-size:11px;font-weight:600;color:rgba(255,255,255,.55);background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:2px 9px;letter-spacing:.3px;margin-left:2px;vertical-align:middle}
+.login-version{font-size:12px;color:#c4c9d2;text-align:center;margin-top:12px}
 .user-menu{position:absolute;top:calc(100% + 10px);right:0;background:#fff;border-radius:12px;box-shadow:var(--shadow-lg);min-width:150px;padding:6px;z-index:200;border:1px solid var(--c-border)}
 .user-menu .menu-item{display:block;width:100%;text-align:left;background:none;border:none;padding:10px 14px;font-size:14px;color:var(--c-text);border-radius:8px;cursor:pointer;font-family:inherit;transition:background .12s}
 .user-menu .menu-item:hover{background:var(--c-navy-50)}
@@ -349,7 +351,7 @@ table.report td textarea:focus{border-color:var(--c-navy-600);outline:none;backg
 </head>
 <body>
 <div class="topbar">
-  <span class="logo"><span class="logo-mark">W</span>WorkReport HR-Pro</span>
+  <span class="logo"><span class="logo-mark">W</span>WorkReport HR-Pro<span class="app-version" id="appVersionTop"></span></span>
   <div class="user" id="headerUser" onclick="toggleUserMenu(event)">
     <span class="avatar" id="headerAvatar"></span>
     <span id="headerName"></span>
@@ -388,6 +390,7 @@ table.report td textarea:focus{border-color:var(--c-navy-600);outline:none;backg
         <button class="btn btn-primary" onclick="doLogin()">登录</button>
         <div class="tip">默认密码 123456 · 点击下方姓名快速填入</div>
         <div class="quick-login" id="quickLogin"></div>
+        <div class="login-version" id="loginVersion"></div>
       </div>
     </div>
   </div>
@@ -578,6 +581,7 @@ table.report td textarea:focus{border-color:var(--c-navy-600);outline:none;backg
 let currentUser = null, allUsers = [], allGoals = [], allItems = [];
 const WEEK_START = (() => { const d=new Date(); const day=d.getDay(); const diff=d.getDate()-day+(day===0?-6:1); return new Date(d.setDate(diff)).toISOString().split('T')[0]; })();
 let reportWeek = WEEK_START;  // 填写周报页当前查看的周（默认本周）
+const APP_VERSION = 'v1.1.5';  // 系统版本号（升级时只改这里）
 // 汇报视图的查看周：默认「上一周」（周一开例会回溯上周成果）
 function mondayOf(dateStr){ const d=new Date(dateStr); const day=d.getDay(); d.setDate(d.getDate()-day+(day===0?-6:1)); return d.toISOString().split('T')[0]; }
 let viewWeek = (() => { const d=new Date(WEEK_START); d.setDate(d.getDate()-7); return d.toISOString().split('T')[0]; })();
@@ -585,6 +589,9 @@ const ST_CLASS = {'已完成':'st-done','进行中':'st-doing','临期':'st-warn
 const ST_ICON = {'已完成':'✓','进行中':'●','临期':'⚠','延期':'⏰','暂停':'⛔','终止':'⛔'};
 
 async function init(){
+  // 版本号展示（顶栏 + 登录页）
+  document.getElementById('appVersionTop').textContent = APP_VERSION;
+  document.getElementById('loginVersion').textContent = '当前版本 ' + APP_VERSION;
   document.getElementById('weekLabel').textContent = `本周: ${WEEK_START}`;
   allGoals = await (await fetch('/api/goals')).json();
   const goalSel = document.getElementById('niGoal');
