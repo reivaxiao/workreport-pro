@@ -114,7 +114,7 @@ table.report tr:hover td{background:var(--c-navy-50)}
 .col-progress{min-width:220px}
 .col-support{min-width:170px}
 .col-cum{min-width:150px}
-table.report td textarea{width:100%;border:1px solid var(--c-border);border-radius:8px;padding:9px 11px;font-size:14px;font-family:inherit;resize:vertical;background:#fbfcfe;display:block;transition:border .15s,background .15s,box-shadow .15s}
+table.report td textarea{width:100%;border:1px solid var(--c-border);border-radius:8px;padding:9px 11px;font-size:13px;font-family:inherit;resize:vertical;background:#fbfcfe;display:block;transition:border .15s,background .15s,box-shadow .15s}
 table.report td textarea:focus{border-color:var(--c-navy-600);outline:none;background:#fff;box-shadow:0 0 0 3px rgba(42,64,112,.1)}
 .cum-line{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--c-navy-800);margin:3px 0;white-space:nowrap}
 .cum-line input{width:52px;padding:4px 6px;border:1px solid #ccd9ec;border-radius:6px;font-size:13px;text-align:center}
@@ -581,7 +581,7 @@ table.report td textarea:focus{border-color:var(--c-navy-600);outline:none;backg
 let currentUser = null, allUsers = [], allGoals = [], allItems = [];
 const WEEK_START = (() => { const d=new Date(); const day=d.getDay(); const diff=d.getDate()-day+(day===0?-6:1); return new Date(d.setDate(diff)).toISOString().split('T')[0]; })();
 let reportWeek = WEEK_START;  // 填写周报页当前查看的周（默认本周）
-const APP_VERSION = 'v1.1.6';  // 系统版本号（升级时只改这里）
+const APP_VERSION = 'v1.1.7';  // 系统版本号（升级时只改这里）
 // 汇报视图的查看周：默认「上一周」（周一开例会回溯上周成果）
 function mondayOf(dateStr){ const d=new Date(dateStr); const day=d.getDay(); d.setDate(d.getDate()-day+(day===0?-6:1)); return d.toISOString().split('T')[0]; }
 let viewWeek = (() => { const d=new Date(WEEK_START); d.setDate(d.getDate()-7); return d.toISOString().split('T')[0]; })();
