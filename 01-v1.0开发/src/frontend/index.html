@@ -1354,7 +1354,7 @@ function renderDashContent(){
             const cumTxt = w.is_cumulative && w.cum_value ? Object.entries(w.cum_value).map(([k,v])=>`${k}:${v}`).join(' ') : '';
             const detail = `
               ${w.progress?`<div class="w-detail"><span class="wd-label">本周成果/下阶段</span>${w.progress}${w.next_plan?' / '+w.next_plan:''}</div>`:''}
-              ${w.due_date?`<div class="w-detail"><span class="wd-label">截止</span>${w.due_date}</div>`:''}
+              <div class="w-detail"><span class="wd-label">截止</span><input type="date" class="due-input" data-item-id="${w.id}" value="${w.due_date||''}" onchange="updateDueDate(this)"></div>
               ${w.blockers?`<div class="w-detail"><span class="wd-label">需支持</span>${w.blockers}</div>`:''}`;
             // 操作按钮：批注 + 办结/继续跟进（已完成则显示"继续跟进"反悔）
             const actionBtns = w.status === '已完成'

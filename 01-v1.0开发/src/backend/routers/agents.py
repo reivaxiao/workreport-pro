@@ -563,7 +563,7 @@ def agent_dashboard(week_start: Optional[str] = None, db: Session = Depends(get_
         for mem in g["members"]:
             p = prog_map.get(mem["id"])
             if p:
-                mem["progress"] = p.progress or ""
+                mem["progress"] = _clean_progress(p.progress or "")
         # 该重点工作下所有成员 id（合并后可能多个 work_item）
         member_ids = [mem["id"] for mem in g["members"]]
         # 管理者修改文字：取第一个有记录的成员
@@ -611,7 +611,7 @@ def agent_dashboard(week_start: Optional[str] = None, db: Session = Depends(get_
                 "status": compute_status(it),
                 "is_cumulative": it.is_cumulative,
                 "cum_value": cum,
-                "progress": p.progress if p else "",
+                "progress": _clean_progress(p.progress) if p else "",
             })
         goal_review.append({
             "goal_id": goal.id, "goal_name": goal.name, "weight": goal.weight,
@@ -641,8 +641,8 @@ def agent_dashboard(week_start: Optional[str] = None, db: Session = Depends(get_
                 "cum_value": cum,
                 "function": it.function, "module1": it.module1, "module2": it.module2,
                 "target_desc": it.target_desc, "due_date": it.due_date,
-                "progress": p.progress if p else "",
-                "next_plan": p.next_plan if p else "",
+                "progress": _clean_progress(p.progress) if p else "",
+                "next_plan": _clean_progress(p.next_plan) if p and p.next_plan else "",
                 "blockers": p.blockers if p else "",
             })
         members.append({
@@ -878,13 +878,24 @@ def extract_todos(data: TodoExtractRequest, db: Session = Depends(get_db)):
             result = None
 
         if isinstance(result, list):
+            # 按工作事项合并：同一事项的多条待办合并成一条（内容用"；"连接）
+            merged = {}
             for r in result:
                 if isinstance(r, dict) and r.get("content"):
-                    db.add(Todo(content=r["content"].strip(), owner_id=u.id,
-                                work_item_name=r.get("work_item_name", "") or "",
-                                due_date=r.get("due_date", "") or "",
-                                week_start=week_start, status="进行中"))
-                    created_count += 1
+                    name = r.get("work_item_name", "") or "其他"
+                    content = r["content"].strip()
+                    if name in merged:
+                        merged[name]["content"].append(content)
+                        if not merged[name]["due_date"] and r.get("due_date"):
+                            merged[name]["due_date"] = r["due_date"]
+                    else:
+                        merged[name] = {"content": [content], "due_date": r.get("due_date", "") or ""}
+            for name, m in merged.items():
+                db.add(Todo(content="；".join(m["content"]), owner_id=u.id,
+                            work_item_name=name,
+                            due_date=m["due_date"],
+                            week_start=week_start, status="进行中"))
+                created_count += 1
     db.commit()
     return {"message": f"已提取 {created_count} 条待办", "created": created_count}
 
