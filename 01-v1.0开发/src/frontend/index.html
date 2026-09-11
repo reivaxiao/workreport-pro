@@ -104,15 +104,15 @@ body::before{content:'';position:fixed;top:0;left:0;right:0;height:320px;backgro
 /* 表格形式周报 */
 .table-wrap{overflow-x:auto;background:var(--c-card);border-radius:var(--r-lg);box-shadow:var(--shadow-md);border:1px solid rgba(228,231,238,.6)}
 table.report{width:100%;border-collapse:collapse;min-width:1200px}
-table.report th{background:var(--c-navy-50);color:var(--c-navy-900);font-size:13px;font-weight:700;padding:13px 14px;text-align:left;border-bottom:2px solid var(--c-navy-100);white-space:nowrap;position:sticky;top:0}
-table.report td{padding:13px 14px;border-bottom:1px solid #eef0f3;font-size:14px;vertical-align:top}
+table.report th{background:var(--c-navy-50);color:var(--c-navy-900);font-size:14px;font-weight:700;padding:13px 14px;text-align:left;border-bottom:2px solid var(--c-navy-100);white-space:nowrap;position:sticky;top:0}
+table.report td{padding:13px 14px;border-bottom:1px solid #eef0f3;font-size:15px;vertical-align:top}
 table.report tr:hover td{background:var(--c-navy-50)}
 .col-name{min-width:220px}
 .col-lastweek{min-width:150px}
 .col-progress{min-width:220px}
 .col-support{min-width:170px}
 .col-cum{min-width:150px}
-table.report td textarea{width:100%;border:1px solid var(--c-border);border-radius:8px;padding:9px 11px;font-size:13px;font-family:inherit;resize:vertical;background:#fbfcfe;display:block;transition:border .15s,background .15s,box-shadow .15s}
+table.report td textarea{width:100%;border:1px solid var(--c-border);border-radius:8px;padding:9px 11px;font-size:14px;font-family:inherit;resize:vertical;background:#fbfcfe;display:block;transition:border .15s,background .15s,box-shadow .15s}
 table.report td textarea:focus{border-color:var(--c-navy-600);outline:none;background:#fff;box-shadow:0 0 0 3px rgba(42,64,112,.1)}
 .cum-line{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--c-navy-800);margin:3px 0;white-space:nowrap}
 .cum-line input{width:52px;padding:4px 6px;border:1px solid #ccd9ec;border-radius:6px;font-size:13px;text-align:center}
@@ -396,11 +396,17 @@ table.report td textarea:focus{border-color:var(--c-navy-600);outline:none;backg
         <div>
           <h2 style="margin:0">工作周报 <span style="font-size:13px;color:#888;font-weight:400" id="weekLabel"></span></h2>
           <div class="page-sub">填写本周进展与下阶段计划，提交后管理者可见</div>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:8px" id="reportWeekBar">
+            <button class="week-btn" onclick="shiftReportWeek(-1)">◀ 上一周</button>
+            <button class="week-btn" onclick="shiftReportWeek(0)">本周</button>
+            <button class="week-btn" onclick="shiftReportWeek(1)">下一周 ▶</button>
+            <input type="date" id="reportWeekPicker" onchange="jumpReportWeek()" style="font-size:13px;padding:3px 8px;border:1px solid #d8dfe9;border-radius:6px;font-family:inherit;background:#fff;color:#1d2f52">
+          </div>
         </div>
       </div>
       <div style="display:flex;gap:8px">
-        <button class="btn btn-outline btn-sm" onclick="saveDraft()">保存草稿</button>
-        <button class="btn btn-primary btn-sm" onclick="submitReport()">提交周报</button>
+        <button class="btn btn-outline btn-sm" id="draftSaveBtn" onclick="saveDraft()">保存草稿</button>
+        <button class="btn btn-primary btn-sm" id="submitBtn" onclick="submitReport()">提交周报</button>
       </div>
     </div>
 
@@ -411,7 +417,7 @@ table.report td textarea:focus{border-color:var(--c-navy-600);outline:none;backg
     <div class="card">
       <div class="overview-head">
         <h2>我的工作事项概览</h2>
-        <button class="btn btn-primary btn-sm" onclick="showAddItem()">+ 新增事项</button>
+        <button class="btn btn-primary btn-sm" id="addItemBtn" onclick="showAddItem()">+ 新增事项</button>
       </div>
       <div class="ov-list" id="itemsOverview"></div>
       <div id="addItemForm" class="hidden" style="margin-top:16px;padding-top:16px;border-top:1px solid #eee">
@@ -567,6 +573,7 @@ table.report td textarea:focus{border-color:var(--c-navy-600);outline:none;backg
 <script>
 let currentUser = null, allUsers = [], allGoals = [], allItems = [];
 const WEEK_START = (() => { const d=new Date(); const day=d.getDay(); const diff=d.getDate()-day+(day===0?-6:1); return new Date(d.setDate(diff)).toISOString().split('T')[0]; })();
+let reportWeek = WEEK_START;  // 填写周报页当前查看的周（默认本周）
 // 汇报视图的查看周：默认「上一周」（周一开例会回溯上周成果）
 function mondayOf(dateStr){ const d=new Date(dateStr); const day=d.getDay(); d.setDate(d.getDate()-day+(day===0?-6:1)); return d.toISOString().split('T')[0]; }
 let viewWeek = (() => { const d=new Date(WEEK_START); d.setDate(d.getDate()-7); return d.toISOString().split('T')[0]; })();
@@ -763,9 +770,17 @@ function goalFoldHtml(d){
 }
 
 async function loadReport(){
-  const data = await (await fetch(`/api/reports/my-progress?user_id=${currentUser.id}&week_start=${WEEK_START}`)).json();
+  const isCurrentWeek = (reportWeek === WEEK_START);
+  // 更新周标签 + 周切换器状态
+  document.getElementById('weekLabel').textContent = isCurrentWeek ? `本周: ${WEEK_START}` : `回看: ${reportWeek}`;
+  document.getElementById('reportWeekPicker').value = reportWeek;
+  // 非本周 → 只读回看：隐藏编辑按钮、禁用输入
+  document.getElementById('draftSaveBtn').style.display = isCurrentWeek ? '' : 'none';
+  document.getElementById('submitBtn').style.display = isCurrentWeek ? '' : 'none';
+  document.getElementById('addItemBtn').style.display = isCurrentWeek ? '' : 'none';
+  const data = await (await fetch(`/api/reports/my-progress?user_id=${currentUser.id}&week_start=${reportWeek}`)).json();
   // 本周所有附件（按事项分组）
-  const atts = await (await fetch(`/api/attachments?week_start=${WEEK_START}`)).json();
+  const atts = await (await fetch(`/api/attachments?week_start=${reportWeek}`)).json();
   const attMap = {};
   atts.forEach(a=>{ (attMap[a.work_item_id]=attMap[a.work_item_id]||[]).push(a); });
 
@@ -782,6 +797,8 @@ async function loadReport(){
 
   // 2. 明细表格
   const body = document.getElementById('reportBody');
+  const ro = isCurrentWeek ? '' : ' readonly';
+  const dis = isCurrentWeek ? '' : ' disabled';
   if(!data.length){ body.innerHTML = '<tr><td colspan="5" class="empty">暂无工作事项，请先新增事项</td></tr>'; return; }
   body.innerHTML = data.map(d => {
     let cumHtml = '';
@@ -789,7 +806,7 @@ async function loadReport(){
       cumHtml = d.cum_metrics.map(m => {
         const v = (d.cum_data && d.cum_data[m.key]!==undefined) ? d.cum_data[m.key] : '';
         const total = (d.cum_value && d.cum_value[m.key]!==undefined) ? d.cum_value[m.key] : 0;
-        return `<div class="cum-line">${m.label}<input type="number" min="0" class="cum-input" data-metric="${m.key}" value="${v}">${m.unit}<span class="cum-total">累计 ${total}</span></div>`;
+        return `<div class="cum-line">${m.label}<input type="number" min="0" class="cum-input" data-metric="${m.key}" value="${v}"${dis}>${m.unit}<span class="cum-total">累计 ${total}</span></div>`;
       }).join('');
     } else {
       cumHtml = '<span class="no-cum">—</span>';
@@ -798,22 +815,22 @@ async function loadReport(){
     const attHtml = `
       <div class="att-area">
         ${itemAtts.length?`<div class="att-list">${itemAtts.map(a=>`<a class="att-link" href="/api/attachments/${a.id}/download" target="_blank">📎 ${a.filename}</a>`).join('')}</div>`:''}
-        <button class="att-btn" data-item-id="${d.work_item_id}" onclick="uploadAttachment(this)">📎 上传附件</button>
+        ${isCurrentWeek?`<button class="att-btn" data-item-id="${d.work_item_id}" onclick="uploadAttachment(this)">📎 上传附件</button>`:''}
       </div>`;
     return `<tr data-item-id="${d.work_item_id}">
       <td class="col-name">
         <div style="font-weight:700">${d.work_item_name}</div>
         <div style="margin-top:3px">${catTag(d.category)} ${impTag(d.importance)} ${stBadge(d.status)} ${d.is_cumulative?'<span class="tag tag-cum">累计制</span>':''}</div>
-        <div style="font-size:12px;color:#888;margin-top:3px">截止 <input type="date" class="due-input" data-item-id="${d.work_item_id}" value="${d.due_date||''}" onchange="updateDueDate(this)"></div>
+        <div style="font-size:12px;color:#888;margin-top:3px">截止 <input type="date" class="due-input" data-item-id="${d.work_item_id}" value="${d.due_date||''}" onchange="updateDueDate(this)"${dis}></div>
         ${goalFoldHtml(d)}
         ${attHtml}
       </td>
       <td class="col-lastweek"><div style="font-size:13px;color:#666;white-space:pre-line">${d.last_week_progress||'<span style="color:#ccc">无</span>'}</div></td>
       <td class="col-progress">
-        <textarea class="p-input" data-field="progress" placeholder="已完成：……&#10;下周计划开展：……">${d.progress||''}</textarea>
-        <button class="polish-btn" data-item-id="${d.work_item_id}" onclick="polishText(this)">✨ AI 提炼</button>
+        <textarea class="p-input" data-field="progress" placeholder="已完成：……&#10;下周计划开展：……"${ro}>${d.progress||''}</textarea>
+        ${isCurrentWeek?`<button class="polish-btn" data-item-id="${d.work_item_id}" onclick="polishText(this)">✨ AI 提炼</button>`:''}
       </td>
-      <td class="col-support"><textarea class="p-input" data-field="blockers" placeholder="需要什么支持 / 待决策事项">${d.blockers||''}</textarea></td>
+      <td class="col-support"><textarea class="p-input" data-field="blockers" placeholder="需要什么支持 / 待决策事项"${ro}>${d.blockers||''}</textarea></td>
       <td class="col-cum">${cumHtml}</td>
     </tr>`;
   }).join('');
@@ -858,7 +875,7 @@ async function uploadAttachment(btn){
     const fd = new FormData();
     fd.append('file', file);
     fd.append('work_item_id', itemId);
-    fd.append('week_start', WEEK_START);
+    fd.append('week_start', reportWeek);
     fd.append('uploaded_by', currentUser.id);
     const r = await fetch('/api/attachments', {method:'POST', body:fd});
     const res = await r.json();
@@ -889,7 +906,7 @@ function collectData(){
 
 async function saveDraft(){
   const entries = collectData();
-  await fetch(`/api/reports/save-draft?user_id=${currentUser.id}&week_start=${WEEK_START}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({entries})});
+  await fetch(`/api/reports/save-draft?user_id=${currentUser.id}&week_start=${reportWeek}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({entries})});
   alert('草稿已保存');
 }
 
@@ -927,7 +944,7 @@ async function polishText(btn){
 
 async function submitReport(){
   const entries = collectData();
-  const r = await fetch(`/api/reports/submit?user_id=${currentUser.id}&week_start=${WEEK_START}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({entries})});
+  const r = await fetch(`/api/reports/submit?user_id=${currentUser.id}&week_start=${reportWeek}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({entries})});
   const res = await r.json();
   alert(res.message||'提交成功');
 }
@@ -1017,6 +1034,25 @@ function shiftWeek(delta){
   }
   loadDashboard();
   if(document.getElementById('goalReviewContent')){ loadGoalReview(); }
+}
+
+// ========== 填写周报页：周切换（回看历史，非本周只读） ==========
+function shiftReportWeek(delta){
+  if(delta === 0){
+    reportWeek = WEEK_START;
+  } else {
+    const d = new Date(reportWeek);
+    d.setDate(d.getDate() + delta * 7);
+    reportWeek = d.toISOString().split('T')[0];
+  }
+  loadReport();
+}
+
+function jumpReportWeek(){
+  const v = document.getElementById('reportWeekPicker').value;
+  if(!v) return;
+  reportWeek = v;
+  loadReport();
 }
 
 // ========== 汇报视图 ==========
@@ -1514,7 +1550,7 @@ async function undoComplete(itemId, itemName){
 // ========== 员工端：查看管理者反馈 ==========
 async function loadMyFeedback(){
   // 员工登录后加载发给自己的批注
-  const r = await fetch(`/api/annotations?week_start=${WEEK_START}&user_id=${currentUser.id}`);
+  const r = await fetch(`/api/annotations?week_start=${reportWeek}&user_id=${currentUser.id}`);
   const anns = await r.json();
   const panel = document.getElementById('aiPanel');
   if(anns.length){
