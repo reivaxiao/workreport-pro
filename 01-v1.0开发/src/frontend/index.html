@@ -581,7 +581,7 @@ table.report td textarea:focus{border-color:var(--c-navy-600);outline:none;backg
 let currentUser = null, allUsers = [], allGoals = [], allItems = [];
 const WEEK_START = (() => { const d=new Date(); const day=d.getDay(); const diff=d.getDate()-day+(day===0?-6:1); return new Date(d.setDate(diff)).toISOString().split('T')[0]; })();
 let reportWeek = WEEK_START;  // 填写周报页当前查看的周（默认本周）
-const APP_VERSION = 'v1.1.5';  // 系统版本号（升级时只改这里）
+const APP_VERSION = 'v1.1.6';  // 系统版本号（升级时只改这里）
 // 汇报视图的查看周：默认「上一周」（周一开例会回溯上周成果）
 function mondayOf(dateStr){ const d=new Date(dateStr); const day=d.getDay(); d.setDate(d.getDate()-day+(day===0?-6:1)); return d.toISOString().split('T')[0]; }
 let viewWeek = (() => { const d=new Date(WEEK_START); d.setDate(d.getDate()-7); return d.toISOString().split('T')[0]; })();
