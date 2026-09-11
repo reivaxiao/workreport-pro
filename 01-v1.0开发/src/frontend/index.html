@@ -233,7 +233,11 @@ table.report td textarea:focus{border-color:var(--c-navy-600);outline:none;backg
 
 .ai-summary{background:linear-gradient(135deg,var(--c-navy-50),var(--c-navy-100));border:1px solid var(--c-navy-100);border-radius:14px;padding:18px 20px;margin-bottom:14px;display:flex;align-items:flex-start;gap:12px}
 .ai-summary .ai-tag{background:var(--c-navy-800);color:#fff;font-size:11px;padding:3px 12px;border-radius:12px;white-space:nowrap;margin-top:2px;font-weight:600}
-.ai-summary .summary-text{font-size:14px;color:var(--c-text);line-height:1.7}
+.ai-summary .summary-text{font-size:13px;color:var(--c-text);line-height:1.75}
+.ai-summary .summary-text .sum-head{font-size:14px;font-weight:700;color:var(--c-navy-900);margin-top:10px}
+.ai-summary .summary-text .sum-head:first-child{margin-top:0}
+.ai-summary .summary-text .sum-item{margin-top:8px}
+.ai-summary .summary-text .sum-item-head{font-weight:700;color:var(--c-navy-900)}
 
 .legend{display:flex;gap:12px;flex-wrap:wrap;align-items:center;background:var(--c-card);border-radius:12px;padding:11px 16px;margin-bottom:14px;box-shadow:var(--shadow-sm);border:1px solid rgba(228,231,238,.6)}
 .legend .lg-label{font-size:13px;font-weight:600;color:#555;margin-right:4px}
@@ -1202,6 +1206,23 @@ async function deleteMyTodo(id){
   loadMyTodos();
 }
 
+function renderSummary(content){
+  return content.split('\n').map(line => {
+    const t = line.trim();
+    if(!t) return '';
+    // 大段标题（一、二、三…）加粗突出
+    if(/^[一二三四五六七八九十]+、/.test(t)){
+      return `<div class="sum-head">${t}</div>`;
+    }
+    // 工作项标题：数字. 工作名（负责人）：内容 —— 标题部分加粗
+    const m = t.match(/^(\d+\.\s*[^：:]+[：:])(.*)$/);
+    if(m){
+      return `<div class="sum-item"><span class="sum-item-head">${m[1]}</span>${m[2]}</div>`;
+    }
+    return `<div>${t}</div>`;
+  }).join('');
+}
+
 async function loadSummaryBanner(){
   const banner = document.getElementById('dashSummary');
   const text = document.getElementById('dashSummaryText');
@@ -1210,7 +1231,7 @@ async function loadSummaryBanner(){
     const r = await (await fetch(`/api/agent/get-summary?week_start=${viewWeek}`)).json();
     if(r.content && r.content.trim()){
       banner.classList.remove('hidden');
-      text.innerHTML = r.content.replace(/\n/g,'<br>');
+      text.innerHTML = renderSummary(r.content);
     } else {
       banner.classList.add('hidden');
     }
